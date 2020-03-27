@@ -315,6 +315,10 @@ try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
+try:
+    from ovirt_imageio_common import client
+except ImportError:
+    from ovirt_imageio import client
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.ovirt.ovirt_collection.plugins.module_utils.ovirt import (
     BaseModule,
@@ -344,18 +348,16 @@ def _search_by_lun(disks_service, lun_id):
     return res[0] if res else None
 
 
-def transfer(connection, module, direction, transfer_func):
+def transfer(connection, module, auth):
     transfers_service = connection.system_service().image_transfers_service()
     transfer = transfers_service.add(
         otypes.ImageTransfer(
             image=otypes.Image(
                 id=module.params['id'],
             ),
-            direction=direction,
         )
     )
     transfer_service = transfers_service.image_transfer_service(transfer.id)
-
     try:
         # After adding a new transfer for the disk, the transfer's status will be INITIALIZING.
         # Wait until the init phase is over. The actual transfer can start when its status is "Transferring".
@@ -363,27 +365,21 @@ def transfer(connection, module, direction, transfer_func):
             time.sleep(module.params['poll_interval'])
             transfer = transfer_service.get()
 
-        proxy_url = urlparse(transfer.proxy_url)
-        context = ssl.create_default_context()
-        auth = module.params['auth']
-        if auth.get('insecure'):
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
-        elif auth.get('ca_file'):
-            context.load_verify_locations(cafile=auth.get('ca_file'))
-
-        proxy_connection = HTTPSConnection(
-            proxy_url.hostname,
-            proxy_url.port,
-            context=context,
-        )
-
-        transfer_func(
-            transfer_service,
-            proxy_connection,
-            proxy_url,
-            transfer.signed_ticket
-        )
+        if module.params.get('upload_image_path'):
+            client.upload(
+                module.params.get('upload_image_path'),
+                transfer.proxy_url,
+                auth.get('ca_file') if auth.get('ca_file') else None,
+                secure=auth.get('insecure'),
+            )
+        if module.params.get('download_image_path'):
+            client.download(
+                transfer.proxy_url,
+                module.params.get('download_image_path'),
+                auth.get('ca_file') if auth.get('ca_file') else None,
+                secure=auth.get('insecure'),
+                fmt=module.params.get('format'),
+            )
         return True
     finally:
         transfer_service.finalize()
@@ -410,66 +406,6 @@ def transfer(connection, module, direction, transfer_func):
                 wait=module.params['wait'],
                 timeout=module.params['timeout'],
             )
-
-
-def download_disk_image(connection, module):
-    def _transfer(transfer_service, proxy_connection, proxy_url, transfer_ticket):
-        BUF_SIZE = 128 * 1024
-        transfer_headers = {
-            'Authorization': transfer_ticket,
-        }
-        proxy_connection.request(
-            'GET',
-            proxy_url.path,
-            headers=transfer_headers,
-        )
-        r = proxy_connection.getresponse()
-        path = module.params["download_image_path"]
-        image_size = int(r.getheader('Content-Length'))
-        with open(path, "wb") as mydisk:
-            pos = 0
-            while pos < image_size:
-                to_read = min(image_size - pos, BUF_SIZE)
-                chunk = r.read(to_read)
-                if not chunk:
-                    raise RuntimeError("Socket disconnected")
-                mydisk.write(chunk)
-                pos += len(chunk)
-
-    return transfer(
-        connection,
-        module,
-        otypes.ImageTransferDirection.DOWNLOAD,
-        transfer_func=_transfer,
-    )
-
-
-def upload_disk_image(connection, module):
-    def _transfer(transfer_service, proxy_connection, proxy_url, transfer_ticket):
-        BUF_SIZE = 128 * 1024
-        path = module.params['upload_image_path']
-
-        image_size = os.path.getsize(path)
-        proxy_connection.putrequest("PUT", proxy_url.path)
-        proxy_connection.putheader('Content-Length', "%d" % (image_size,))
-        proxy_connection.endheaders()
-        with open(path, "rb") as disk:
-            pos = 0
-            while pos < image_size:
-                to_read = min(image_size - pos, BUF_SIZE)
-                chunk = disk.read(to_read)
-                if not chunk:
-                    transfer_service.pause()
-                    raise RuntimeError("Unexpected end of file at pos=%d" % pos)
-                proxy_connection.send(chunk)
-                pos += len(chunk)
-
-    return transfer(
-        connection,
-        module,
-        otypes.ImageTransferDirection.UPLOAD,
-        transfer_func=_transfer,
-    )
 
 
 class DisksModule(BaseModule):
@@ -731,13 +667,13 @@ def main():
 
             # Upload disk image in case it's new disk or force parameter is passed:
             if module.params['upload_image_path'] and (is_new_disk or module.params['force']):
-                uploaded = upload_disk_image(connection, module)
+                uploaded = transfer(connection, module, auth)
                 ret['changed'] = ret['changed'] or uploaded
             # Download disk image in case it's file don't exist or force parameter is passed:
             if (
                 module.params['download_image_path'] and (not os.path.isfile(module.params['download_image_path']) or module.params['force'])
             ):
-                downloaded = download_disk_image(connection, module)
+                downloaded = transfer(connection, module, auth)
                 ret['changed'] = ret['changed'] or downloaded
 
             # Disk sparsify, only if disk is of image type:
