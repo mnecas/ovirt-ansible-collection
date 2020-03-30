@@ -368,13 +368,13 @@ def transfer(connection, module, auth):
         if module.params.get('upload_image_path'):
             client.upload(
                 module.params.get('upload_image_path'),
-                transfer.proxy_url,
+                transfer.transfer_url,
                 auth.get('ca_file') if auth.get('ca_file') else None,
                 secure=auth.get('insecure'),
             )
         if module.params.get('download_image_path'):
             client.download(
-                transfer.proxy_url,
+                transfer.transfer_url,
                 module.params.get('download_image_path'),
                 auth.get('ca_file') if auth.get('ca_file') else None,
                 secure=auth.get('insecure'),
