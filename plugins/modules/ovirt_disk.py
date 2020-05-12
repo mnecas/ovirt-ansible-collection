@@ -724,6 +724,7 @@ def main():
                 result_state=otypes.DiskStatus.OK if lun is None else None,
                 fail_condition=lambda d: d.status == otypes.DiskStatus.ILLEGAL if lun is None else False,
                 force_create=force_create,
+                search_params=searchable_attributes(module),
             )
             is_new_disk = ret['changed']
             ret['changed'] = ret['changed'] or disks_module.update_storage_domains(ret['id'])
