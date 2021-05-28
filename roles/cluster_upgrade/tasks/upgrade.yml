@@ -60,7 +60,7 @@
     - "{{ cluster_info.ovirt_clusters[0].gluster_volumes }}"
   loop_control:
     loop_var: volume_item
-  when:  cluster_info.ovirt_clusters[0].gluster_service | bool
+  when: cluster_info.ovirt_clusters[0].gluster_service | bool
 
 - name: Refresh gluster heal info entries to database
   uri:

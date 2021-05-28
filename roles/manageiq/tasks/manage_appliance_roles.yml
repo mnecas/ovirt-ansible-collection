@@ -5,7 +5,7 @@
     user: "{{ miq_app_username }}"
     password: "{{ miq_app_password }}"
     method: GET
-    validate_certs: no
+    validate_certs: false
   register: miq_active_roles_json
 
 - name: Extracting the roles from the JSON output
@@ -26,7 +26,7 @@
     user: "{{ miq_app_username }}"
     password: "{{ miq_app_password }}"
     method: PATCH
-    validate_certs: no
+    validate_certs: false
     body_format: json
     body:
       server:

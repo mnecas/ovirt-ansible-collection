@@ -28,31 +28,31 @@
 # Find default disk size for miq disk:
 #
 - block:
-  - name: Extract integer from miq_vm_disk_size
-    set_fact:
-      miq_vm_disk_size_gib: "{{ miq_vm_disk_size | regex_replace('GiB$') }}"
+    - name: Extract integer from miq_vm_disk_size
+      set_fact:
+        miq_vm_disk_size_gib: "{{ miq_vm_disk_size | regex_replace('GiB$') }}"
 
-  - name: Fail if miq_vm_disk_size is less than  qcow size
-    fail:
-      msg: "Setting a disk size ({{ miq_vm_disk_size }}) lower than the image size ({{ miq_image_size_gib }}GiB) may result in disk corruption."
-    when: "miq_vm_disk_size_gib < miq_image_size_gib"
+    - name: Fail if miq_vm_disk_size is less than  qcow size
+      fail:
+        msg: "Setting a disk size ({{ miq_vm_disk_size }}) lower than the image size ({{ miq_image_size_gib }}GiB) may result in disk corruption."
+      when: "miq_vm_disk_size_gib < miq_image_size_gib"
   when: "miq_vm_disk_size is defined"
 
 #
 # Find default data storage domain for Miq disk:
 #
 - block:
-  - name: Fetch storages
-    ovirt_storage_domain_info:
-      auth: "{{ ovirt_auth }}"
-      pattern: "Clusters.name={{ miq_vm_cluster }} and status=active"
-    register: sd_info
+    - name: Fetch storages
+      ovirt_storage_domain_info:
+        auth: "{{ ovirt_auth }}"
+        pattern: "Clusters.name={{ miq_vm_cluster }} and status=active"
+      register: sd_info
 
-  - name: Find data domain
-    set_fact:
-      disk_storage_domain: "{{ sd_info.ovirt_storage_domains | json_query(the_query) | list | first }}"
-    vars:
-      the_query: "[?type=='data']"
+    - name: Find data domain
+      set_fact:
+        disk_storage_domain: "{{ sd_info.ovirt_storage_domains | json_query(the_query) | list | first }}"
+      vars:
+        the_query: "[?type=='data']"
   when: miq_vm_disk_storage is undefined
 
 - name: Check if VM already exists
@@ -62,17 +62,17 @@
   register: vm_info
 
 - block:
-  - name: Deploy the qcow image to oVirt engine
-    ovirt_disk:
-      auth: "{{ ovirt_auth }}"
-      name: "{{ miq_vm_disk_name | default(miq_vm_name) }}"
-      interface: "{{ miq_vm_disk_interface }}"
-      size: "{{ miq_vm_disk_size | default(miq_image_size_gib + 'GiB') }}"
-      format: "{{  miq_vm_disk_format }}"
-      image_path: "{{ downloaded_file.dest }}"
-      storage_domain: "{{ disk_storage_domain.name if disk_storage_domain is defined else miq_vm_disk_storage }}"
-      force: "{{ vm_info.ovirt_vms | length == 0 }}"
-    register: ovirt_disk
+    - name: Deploy the qcow image to oVirt engine
+      ovirt_disk:
+        auth: "{{ ovirt_auth }}"
+        name: "{{ miq_vm_disk_name | default(miq_vm_name) }}"
+        interface: "{{ miq_vm_disk_interface }}"
+        size: "{{ miq_vm_disk_size | default(miq_image_size_gib + 'GiB') }}"
+        format: "{{  miq_vm_disk_format }}"
+        image_path: "{{ downloaded_file.dest }}"
+        storage_domain: "{{ disk_storage_domain.name if disk_storage_domain is defined else miq_vm_disk_storage }}"
+        force: "{{ vm_info.ovirt_vms | length == 0 }}"
+      register: ovirt_disk
 
   rescue:
     - name: Remove failed disk

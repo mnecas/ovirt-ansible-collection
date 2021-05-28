@@ -34,7 +34,7 @@
       ovirt_cluster_info:
         auth: "{{ ovirt_auth }}"
         pattern: "name={{ cluster_name }}"
-        fetch_nested: True
+        fetch_nested: true
         nested_attributes: name
       check_mode: "no"
       register: cluster_info
@@ -71,19 +71,19 @@
       register: host_info
 
     - block:
-      - name: Print - no hosts to be updated
-        debug:
-          msg: "No hosts to be updated"
+        - name: Print - no hosts to be updated
+          debug:
+            msg: "No hosts to be updated"
 
-      - name: Log event - no hosts to be updated
-        ovirt_event:
-          auth: "{{ ovirt_auth }}"
-          state: present
-          description: "There are no hosts to be updated for cluster {{ cluster_name }}."
-          origin: "cluster_upgrade"
-          custom_id: "{{ 2147483647 | random | int }}"
-          severity: normal
-          cluster: "{{ cluster_info.ovirt_clusters[0].id }}"
+        - name: Log event - no hosts to be updated
+          ovirt_event:
+            auth: "{{ ovirt_auth }}"
+            state: present
+            description: "There are no hosts to be updated for cluster {{ cluster_name }}."
+            origin: "cluster_upgrade"
+            custom_id: "{{ 2147483647 | random | int }}"
+            severity: normal
+            cluster: "{{ cluster_info.ovirt_clusters[0].id }}"
       when: host_info.ovirt_hosts | length == 0
 
     - block:

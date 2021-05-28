@@ -17,9 +17,9 @@
 - name: Fetch info about appliance
   command: "rpm -qi cfme"
   args:
-    warn: no
+    warn: false
   register: cfme_rpm
-  ignore_errors: yes
+  ignore_errors: true
   changed_when: false
   delegate_to: "{{ miq_ip_addr }}"
 
@@ -27,7 +27,7 @@
   systemd:
     name: evmserverd
     state: started
-    enabled: yes
+    enabled: true
   delegate_to: "{{ miq_ip_addr }}"
   when: "not cfme_rpm.rc == 0"
 
@@ -35,21 +35,21 @@
   no_log: "{{ not miq_debug_create }}"
   uri:
     url: "https://{{ miq_ip_addr }}/api/"
-    validate_certs: no
+    validate_certs: false
     user: "{{ miq_app_username }}"
     password: smartvm
   register: init_miq_vm
-  ignore_errors: yes
+  ignore_errors: true
 
 - block:
-  - name: Set region id
-    set_fact:
-      miq_region_id: "{{ miq_region|int * 1000000000000  + 1 }}"
+    - name: Set region id
+      set_fact:
+        miq_region_id: "{{ miq_region|int * 1000000000000  + 1 }}"
 
-  - name: Initialize CloudForms
-    command: "{{ miq_init_cmd2 }}"
-    delegate_to: "{{ miq_ip_addr }}"
-    when: "init_miq_vm.failed"
+    - name: Initialize CloudForms
+      command: "{{ miq_init_cmd2 }}"
+      delegate_to: "{{ miq_ip_addr }}"
+      when: "init_miq_vm.failed"
 
   when: "cfme_rpm.rc == 0 and init_miq_vm.failed"
 
@@ -61,6 +61,6 @@
 
 - name: Disable cloud-init service
   service:
-    enabled: no
+    enabled: false
     name: cloud-init
   delegate_to: "{{ miq_ip_addr }}"

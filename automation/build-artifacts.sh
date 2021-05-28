@@ -72,7 +72,7 @@ pip3 install rstcheck antsibull-changelog "ansible-lint<5.0.0"
 
 ansible-test sanity
 /usr/local/bin/antsibull-changelog lint
-/usr/local/bin/ansible-lint roles/* -x 204
+/usr/local/bin/ansible-lint roles/* -x 204,line-length
 
 cd $ROOT_PATH
 
