@@ -3,10 +3,11 @@
     path: "{{ miq_image_path }}"
   register: image_path_st
 
+# TODO: fix line-length
 - name: Download the qcow image
   get_url:
     url: "{{ miq_qcow_url }}"
-    dest: "{{ image_path_st.stat.isdir is defined and image_path_st.stat.isdir | ternary( miq_image_path~'/'~miq_qcow_url.rpartition('/')[-1], miq_image_path) | regex_replace('//', '/') }}"
+    dest: "{{ image_path_st.stat.isdir is defined and image_path_st.stat.isdir | ternary( miq_image_path~'/'~miq_qcow_url.rpartition('/')[-1], miq_image_path) | regex_replace('//', '/') }}"  # noqa line-length
     checksum: "{{ miq_image_checksum | default(omit) }}"
   register: downloaded_file
 
