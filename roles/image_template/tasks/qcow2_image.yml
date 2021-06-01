@@ -9,11 +9,11 @@
     path: "{{ image_path }}"
   register: image_path_st
 
-# TODO: fix line-length
+# TODO: fix line-length, when moved to ansible-lint 5.0.0 remove 204 (line-length)
 - name: Download the qcow image
   get_url:
     url: "{{ qcow_url }}"
-    dest: "{{ image_path_st.stat.isdir is defined and image_path_st.stat.isdir | ternary(image_path~'/'~qcow_url.rpartition('/')[-1], image_path) | regex_replace('//', '/') }}"  # noqa line-length
+    dest: "{{ image_path_st.stat.isdir is defined and image_path_st.stat.isdir | ternary(image_path~'/'~qcow_url.rpartition('/')[-1], image_path) | regex_replace('//', '/') }}"  # noqa 204 line-length
     force: "{{ not image_cache_download }}"
     checksum: "{{ image_checksum | default(omit) }}"
     timeout: "{{ image_download_timeout }}"
@@ -121,7 +121,7 @@
           when: template_prerequisites_tasks is defined
           delegate_to: localhost
 
-        # TODO: fix line-length
+        # TODO: fix line-length, when moved to ansible-lint 5.0.0 remove 204 (line-length)
         - name: Create vm
           ovirt_vm:
             auth: "{{ ovirt_auth }}"
@@ -135,7 +135,7 @@
             cpu_cores: "{{ template_cpu }}"
             operating_system: "{{ template_operating_system }}"
             type: "{{ template_type | default(omit) }}"
-            cloud_init: "{{ {'user_name': 'root', 'authorized_ssh_keys': lookup('file', tmp_private_key_file~'.pub') } if template_prerequisites_tasks is defined else omit }}"  # noqa line-length
+            cloud_init: "{{ {'user_name': 'root', 'authorized_ssh_keys': lookup('file', tmp_private_key_file~'.pub') } if template_prerequisites_tasks is defined else omit }}"  # noqa 204 line-length
             disks:
               - id: "{{ disk_info.ovirt_disks[0].id }}"
                 bootable: true
