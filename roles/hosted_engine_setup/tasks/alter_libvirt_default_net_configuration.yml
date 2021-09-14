@@ -1,4 +1,5 @@
 ---
+# virsh net-dumpxml default
 - name: Parse libvirt default network configuration
   virt_net:
     command: get_xml
