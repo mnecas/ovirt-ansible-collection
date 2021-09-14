@@ -88,20 +88,24 @@
       register: finaledit4
   when: not ipv6_deployment|bool
 
+# virsh net-destroy default
 - name: Update libvirt default network configuration, destroy
   virt_net:
     command: destroy
     name: default
+# virsh net-undefine default
 - name: Update libvirt default network configuration, undefine
   virt_net:
     command: undefine
     name: default
   ignore_errors: true
+# virsh net-define file.xml?stdout?
 - name: Update libvirt default network configuration, define
   virt_net:
     command: define
     name: default
     xml: "{{ finaledit6.xmlstring if ipv6_deployment else finaledit4.xmlstring }}"
+# virsh net-start default
 - name: Activate default libvirt network
   virt_net:
     name: default

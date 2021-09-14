@@ -37,6 +37,7 @@
     register: route_rules_ipv6
     changed_when: true
     when: ipv6_deployment|bool
+  # ziskat bridge
   - name: Save bridge name
     set_fact:
       virbr_default: "{{ ansible_libvirt_networks['default']['bridge'] }}"
