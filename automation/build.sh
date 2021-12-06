@@ -70,7 +70,7 @@ cd $COLLECTION_DIR
 
 pip3 install rstcheck antsibull-changelog "ansible-lint<5.0.0"
 
-ansible-test sanity
+ansible-test sanity --skip-test import
 antsibull-changelog lint
 ansible-lint roles/* -x 204
 
