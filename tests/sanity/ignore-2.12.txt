@@ -10,4 +10,4 @@ roles/disaster_recovery/files/generate_vars.py shebang!skip
 roles/disaster_recovery/files/generate_vars_test.py shebang!skip
 roles/disaster_recovery/files/validator.py shebang!skip
 roles/disaster_recovery/files/ovirt-dr shebang!skip
-plugins/module_utils/cloud.py isinstance-second-argument-not-valid-type!skip
+plugins/module_utils/cloud.py pylint:isinstance-second-argument-not-valid-type!skip
