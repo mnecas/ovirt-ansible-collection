@@ -15,7 +15,7 @@ from six.moves import input
 import fail_back
 import fail_over
 import generate_vars
-import validator
+import dr_validator
 
 VALIDATE = 'validate'
 GENERATE = 'generate'
@@ -45,7 +45,7 @@ def main(argv):
         create_log_dir(log_file)
         _print_log_file_name(log_file)
     if action == 'validate':
-        validator.ValidateMappingFile().run(conf_file)
+        dr_validator.ValidateMappingFile().run(conf_file)
     elif action == 'generate':
         generate_vars.GenerateMappingFile().run(conf_file,
                                                 log_file,
