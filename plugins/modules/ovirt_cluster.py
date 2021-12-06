@@ -627,7 +627,7 @@ class ClustersModule(BaseModule):
                 return False
         for entity_provider in entity_providers:
             if not any(self._matches_entity(provider, entity_provider)
-                        for provider in self._get_external_network_providers()):
+                       for provider in self._get_external_network_providers()):
                 return False
         return True
 
