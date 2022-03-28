@@ -87,6 +87,7 @@ sh build.sh install %{collectionname}
 
 %changelog
 * Mon Mar 28 2022 Martin Necas <mnecas@redhat.com> - 2.0.0-1
+- roles: hosted_engine_setup: Fix call to engine-psql for vds_spm_id
 - Release 2.0.0-1 for BETA
 
 * Fri Mar 25 2022 Martin Necas <mnecas@redhat.com> - 2.0.0-0.8.BETA
