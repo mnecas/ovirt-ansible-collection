@@ -34,7 +34,7 @@
       when: chunk is not defined
     - name: Set 3rd chunk
       set_fact:
-        chunk: "{{ chunk|int + 45 }}"  # 200 tries
+        chunk: "{{ chunk|int + 45 }}" # 200 tries
     - name: Get ip route
       shell: ip -6 route get fd00:1234:{{ chunk }}:900::1 | grep "via" | cat
       register: result

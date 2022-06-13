@@ -5,6 +5,19 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    check_support,
+    create_connection,
+    get_id_by_name,
+    equal,
+    engine_supported,
+    ovirt_full_argument_spec,
+    search_by_name,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -138,25 +151,11 @@ affinity_group:
     type: str
 '''
 
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    check_support,
-    create_connection,
-    get_id_by_name,
-    equal,
-    engine_supported,
-    ovirt_full_argument_spec,
-    search_by_name,
-)
 
 
 class AffinityGroupsModule(BaseModule):
@@ -260,7 +259,8 @@ class AffinityGroupsModule(BaseModule):
         assigned_vms = self.assigned_vms(entity)
         do_update = (
             equal(self.param('description'), entity.description) and equal(self.param('vm_enforcing'), entity.enforcing) and equal(
-                self.param('vm_rule') == 'positive' if self.param('vm_rule') else None,
+                self.param('vm_rule') == 'positive' if self.param(
+                    'vm_rule') else None,
                 entity.positive
             ) and equal(self._vm_ids, assigned_vms)
         )
@@ -272,23 +272,27 @@ class AffinityGroupsModule(BaseModule):
         # Following is supported since 4.1:
         return do_update and (
             equal(
-                self.param('host_rule') == 'positive' if self.param('host_rule') else None,
+                self.param('host_rule') == 'positive' if self.param(
+                    'host_rule') else None,
                 entity.hosts_rule.positive) and equal(self.param('host_enforcing'), entity.hosts_rule.enforcing) and equal(
-                self.param('vm_rule') in ['negative', 'positive'] if self.param('vm_rule') else None,
+                self.param('vm_rule') in ['negative', 'positive'] if self.param(
+                    'vm_rule') else None,
                 entity.vms_rule.enabled) and equal(self._host_ids, sorted([host.id for host in entity.hosts]))
         )
 
 
 def main():
     argument_spec = ovirt_full_argument_spec(
-        state=dict(type='str', default='present', choices=['absent', 'present']),
+        state=dict(type='str', default='present',
+                   choices=['absent', 'present']),
         cluster=dict(type='str', required=True),
         name=dict(type='str', required=True),
         description=dict(type='str'),
         vm_enforcing=dict(type='bool'),
         vm_rule=dict(type='str', choices=['disabled', 'negative', 'positive']),
         host_enforcing=dict(type='bool'),
-        host_rule=dict(type='str', choices=['disabled', 'negative', 'positive']),
+        host_rule=dict(type='str', choices=[
+                       'disabled', 'negative', 'positive']),
         vms=dict(type='list', elements='str'),
         hosts=dict(type='list', elements='str'),
         vms_labels=dict(type='list', elements='str'),

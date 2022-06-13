@@ -20,6 +20,14 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    ovirt_info_full_argument_spec,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -85,20 +93,11 @@ ovirt_operating_systems:
     type: list
 '''
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_dict_of_struct,
-    ovirt_info_full_argument_spec,
-)
-
 
 def main():
     argument_spec = ovirt_info_full_argument_spec(
-        filter_keys=dict(default=None, type='list', elements='str', no_log=True),
+        filter_keys=dict(default=None, type='list',
+                         elements='str', no_log=True),
         name=dict(default=None, type='str'),
     )
     module = AnsibleModule(
@@ -117,9 +116,11 @@ def main():
         auth = module.params.pop('auth')
         connection = create_connection(auth)
         operating_systems_service = connection.system_service().operating_systems_service()
-        operating_systems = operating_systems_service.list(follow=",".join(module.params['follow']))
+        operating_systems = operating_systems_service.list(
+            follow=",".join(module.params['follow']))
         if module.params['name']:
-            operating_systems = filter(lambda x: x.name == module.params['name'], operating_systems)
+            operating_systems = filter(
+                lambda x: x.name == module.params['name'], operating_systems)
         result = dict(
             ovirt_operating_systems=[
                 get_dict_of_struct(

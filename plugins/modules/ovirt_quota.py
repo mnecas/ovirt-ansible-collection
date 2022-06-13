@@ -5,6 +5,17 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    get_link_name,
+    ovirt_full_argument_spec,
+    search_by_name,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -160,19 +171,6 @@ try:
 except ImportError:
     pass
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    get_link_name,
-    ovirt_full_argument_spec,
-    search_by_name,
-)
-
 
 class QuotasModule(BaseModule):
 
@@ -182,9 +180,11 @@ class QuotasModule(BaseModule):
             name=self._module.params['name'],
             id=self._module.params['id'],
             storage_hard_limit_pct=self._module.params.get('storage_grace'),
-            storage_soft_limit_pct=self._module.params.get('storage_threshold'),
+            storage_soft_limit_pct=self._module.params.get(
+                'storage_threshold'),
             cluster_hard_limit_pct=self._module.params.get('cluster_grace'),
-            cluster_soft_limit_pct=self._module.params.get('cluster_threshold'),
+            cluster_soft_limit_pct=self._module.params.get(
+                'cluster_threshold'),
         )
 
     def update_storage_limits(self, entity):
@@ -195,9 +195,11 @@ class QuotasModule(BaseModule):
             }
 
         old_limits = {}
-        sd_limit_service = self._service.service(entity.id).quota_storage_limits_service()
+        sd_limit_service = self._service.service(
+            entity.id).quota_storage_limits_service()
         for limit in sd_limit_service.list():
-            storage = get_link_name(self._connection, limit.storage_domain) if limit.storage_domain else ''
+            storage = get_link_name(
+                self._connection, limit.storage_domain) if limit.storage_domain else ''
             old_limits[storage] = {
                 'size': limit.limit,
             }
@@ -214,9 +216,11 @@ class QuotasModule(BaseModule):
             }
 
         old_limits = {}
-        cl_limit_service = self._service.service(entity.id).quota_cluster_limits_service()
+        cl_limit_service = self._service.service(
+            entity.id).quota_cluster_limits_service()
         for limit in cl_limit_service.list():
-            cluster = get_link_name(self._connection, limit.cluster) if limit.cluster else ''
+            cluster = get_link_name(
+                self._connection, limit.cluster) if limit.cluster else ''
             old_limits[cluster] = {
                 'cpu': limit.vcpu_limit,
                 'memory': limit.memory_limit,
@@ -242,7 +246,8 @@ class QuotasModule(BaseModule):
             equal(self._module.params.get('storage_grace'), entity.storage_hard_limit_pct) and
             equal(self._module.params.get('storage_threshold'), entity.storage_soft_limit_pct) and
             equal(self._module.params.get('cluster_grace'), entity.cluster_hard_limit_pct) and
-            equal(self._module.params.get('cluster_threshold'), entity.cluster_soft_limit_pct)
+            equal(self._module.params.get('cluster_threshold'),
+                  entity.cluster_soft_limit_pct)
         )
 
 
@@ -256,10 +261,14 @@ def main():
         name=dict(required=True),
         data_center=dict(required=True),
         description=dict(default=None),
-        cluster_threshold=dict(default=None, type='int', aliases=['cluster_soft_limit']),
-        cluster_grace=dict(default=None, type='int', aliases=['cluster_hard_limit']),
-        storage_threshold=dict(default=None, type='int', aliases=['storage_soft_limit']),
-        storage_grace=dict(default=None, type='int', aliases=['storage_hard_limit']),
+        cluster_threshold=dict(default=None, type='int',
+                               aliases=['cluster_soft_limit']),
+        cluster_grace=dict(default=None, type='int',
+                           aliases=['cluster_hard_limit']),
+        storage_threshold=dict(default=None, type='int',
+                               aliases=['storage_soft_limit']),
+        storage_grace=dict(default=None, type='int',
+                           aliases=['storage_hard_limit']),
         clusters=dict(default=[], type='list', elements='dict'),
         storages=dict(default=[], type='list', elements='dict'),
     )
@@ -275,7 +284,8 @@ def main():
         connection = create_connection(auth)
         datacenters_service = connection.system_service().data_centers_service()
         dc_name = module.params['data_center']
-        dc_id = getattr(search_by_name(datacenters_service, dc_name), 'id', None)
+        dc_id = getattr(search_by_name(
+            datacenters_service, dc_name), 'id', None)
         if dc_id is None:
             raise Exception("Datacenter '%s' was not found." % dc_name)
 
@@ -291,7 +301,8 @@ def main():
             ret = quotas_module.create()
 
             # Manage cluster limits:
-            cl_limit_service = quotas_service.service(ret['id']).quota_cluster_limits_service()
+            cl_limit_service = quotas_service.service(
+                ret['id']).quota_cluster_limits_service()
             for cluster in module.params.get('clusters'):
                 cl_limit_service.add(
                     limit=otypes.QuotaClusterLimit(
@@ -305,7 +316,8 @@ def main():
                 )
 
             # Manage storage limits:
-            sd_limit_service = quotas_service.service(ret['id']).quota_storage_limits_service()
+            sd_limit_service = quotas_service.service(
+                ret['id']).quota_storage_limits_service()
             for storage in module.params.get('storages'):
                 sd_limit_service.add(
                     limit=otypes.QuotaStorageLimit(

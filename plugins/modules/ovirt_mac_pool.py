@@ -5,6 +5,15 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    equal,
+    create_connection,
+    ovirt_full_argument_spec,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -87,21 +96,11 @@ template:
     type: dict
 '''
 
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    equal,
-    create_connection,
-    ovirt_full_argument_spec,
-)
 
 
 class MACPoolModule(BaseModule):

@@ -20,6 +20,16 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    check_params,
+    create_connection,
+    equal,
+    ovirt_full_argument_spec,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -93,22 +103,11 @@ group:
     type: dict
 '''
 
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    check_params,
-    create_connection,
-    equal,
-    ovirt_full_argument_spec,
-)
 
 
 def _group(connection, module):

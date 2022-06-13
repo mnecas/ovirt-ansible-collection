@@ -32,6 +32,6 @@
   when: oscap_profile.stdout is defined
 - name: Reset PermitRootLogin for sshd
   lineinfile: dest=/etc/ssh/sshd_config
-              regexp="^\s*PermitRootLogin"
-              line="PermitRootLogin yes"
-              state=present
+    regexp="^\s*PermitRootLogin"
+    line="PermitRootLogin yes"
+    state=present

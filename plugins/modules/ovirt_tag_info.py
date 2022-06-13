@@ -20,6 +20,16 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    ovirt_info_full_argument_spec,
+    search_by_name,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
+import fnmatch
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -97,18 +107,6 @@ ovirt_tags:
     type: list
 '''
 
-import fnmatch
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_dict_of_struct,
-    ovirt_info_full_argument_spec,
-    search_by_name,
-)
-
 
 def main():
     argument_spec = ovirt_info_full_argument_spec(
@@ -145,7 +143,8 @@ def main():
             hosts_service = connection.system_service().hosts_service()
             host = search_by_name(hosts_service, module.params['host'])
             if host is None:
-                raise Exception("Host '%s' was not found." % module.params['host'])
+                raise Exception("Host '%s' was not found." %
+                                module.params['host'])
             tags.extend(hosts_service.host_service(host.id).tags_service().list(
                 follow=",".join(module.params['follow'])
             ))

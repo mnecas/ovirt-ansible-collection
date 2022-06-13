@@ -18,7 +18,7 @@ power on it if it's a dedicated host, power on at least one of HE hosts (2 if on
 
 According to host power on order the engine could elect a new SPM host or reconstruct the master storage domain.
 The environment can take up to 10 minutes to come back to a stable condition.
-Possible improvements are tracked here: https://bugzilla.redhat.com/1609029
+Possible improvements are tracked here: <https://bugzilla.redhat.com/1609029>
 
 Example Playbook
 ----------------
@@ -44,6 +44,7 @@ Example Playbook
 
 Demo
 ----
+
  Here a demo showing a clean and ordered shutdown of an hyper-converged hosted-engine environment with 3 hosts, 3 regular VMs plus the HE one.
 [![asciicast](https://asciinema.org/a/261501.svg)](https://asciinema.org/a/261501)
 

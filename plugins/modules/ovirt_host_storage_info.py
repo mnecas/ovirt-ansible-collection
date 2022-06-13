@@ -5,6 +5,15 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    ovirt_info_full_argument_spec,
+    get_id_by_name,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -106,21 +115,11 @@ ovirt_host_storages:
     type: list
 '''
 
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_dict_of_struct,
-    ovirt_info_full_argument_spec,
-    get_id_by_name,
-)
 
 
 def _login(host_service, iscsi):
@@ -167,13 +166,17 @@ def main():
             _login(host_service, module.params.get('iscsi'))
 
         # Get LUNs exposed from the specified target
-        host_storages = host_service.storage_service().list(follow=",".join(module.params['follow']))
+        host_storages = host_service.storage_service().list(
+            follow=",".join(module.params['follow']))
         if module.params.get('iscsi') is not None:
-            host_storages = list(filter(lambda x: x.type == otypes.StorageType.ISCSI, host_storages))
+            host_storages = list(
+                filter(lambda x: x.type == otypes.StorageType.ISCSI, host_storages))
             if 'target' in module.params.get('iscsi'):
-                host_storages = list(filter(lambda x: module.params.get('iscsi').get('target') == x.logical_units[0].target, host_storages))
+                host_storages = list(filter(lambda x: module.params.get('iscsi').get(
+                    'target') == x.logical_units[0].target, host_storages))
         elif module.params.get('fcp') is not None:
-            host_storages = list(filter(lambda x: x.type == otypes.StorageType.FCP, host_storages))
+            host_storages = list(
+                filter(lambda x: x.type == otypes.StorageType.FCP, host_storages))
 
         result = dict(
             ovirt_host_storages=[

@@ -5,6 +5,20 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    follow_link,
+    get_link_name,
+    ovirt_full_argument_spec,
+    search_by_attributes,
+    search_by_name,
+    get_id_by_name
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -154,22 +168,6 @@ try:
 except ImportError:
     pass
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    follow_link,
-    get_link_name,
-    ovirt_full_argument_spec,
-    search_by_attributes,
-    search_by_name,
-    get_id_by_name
-)
-
 
 def _objects_service(connection, object_type):
     if object_type == 'system':
@@ -190,7 +188,8 @@ def _object_service(connection, module):
 
     object_id = module.params['object_id']
     if object_id is None:
-        sdk_object = search_by_name(objects_service, module.params['object_name'])
+        sdk_object = search_by_name(
+            objects_service, module.params['object_name'])
         if sdk_object is None:
             raise Exception(
                 "'%s' object '%s' was not found." % (
@@ -213,7 +212,8 @@ def _permission(module, permissions_service, connection):
         if (
             equal(module.params['user_name'], user.principal if user else None) and
             equal(module.params['group_name'], get_link_name(connection, permission.group)) and
-            equal(module.params['role'], get_link_name(connection, permission.role))
+            equal(module.params['role'], get_link_name(
+                connection, permission.role))
         ):
             return permission
 
@@ -229,7 +229,8 @@ class PermissionsModule(BaseModule):
             ),
         )
         if user is None:
-            raise Exception("User '%s' was not found." % self._module.params['user_name'])
+            raise Exception("User '%s' was not found." %
+                            self._module.params['user_name'])
         return user
 
     def _group(self):
@@ -249,11 +250,13 @@ class PermissionsModule(BaseModule):
                 )
             ]
         if not groups:
-            raise Exception("Group '%s' was not found." % self._module.params['group_name'])
+            raise Exception("Group '%s' was not found." %
+                            self._module.params['group_name'])
         return groups[0]
 
     def build_entity(self):
-        entity = self._group() if self._module.params['group_name'] else self._user()
+        entity = self._group(
+        ) if self._module.params['group_name'] else self._user()
 
         return otypes.Permission(
             user=otypes.User(
@@ -270,7 +273,8 @@ class PermissionsModule(BaseModule):
 
 def main():
     argument_spec = ovirt_full_argument_spec(
-        state=dict(type='str', default='present', choices=['absent', 'present']),
+        state=dict(type='str', default='present',
+                   choices=['absent', 'present']),
         role=dict(type='str', default='UserRole'),
         object_type=dict(type='str', default='vm',
                          choices=[
@@ -313,7 +317,8 @@ def main():
     try:
         auth = module.params.pop('auth')
         connection = create_connection(auth)
-        permissions_service = _object_service(connection, module).permissions_service()
+        permissions_service = _object_service(
+            connection, module).permissions_service()
         permissions_module = PermissionsModule(
             connection=connection,
             module=module,

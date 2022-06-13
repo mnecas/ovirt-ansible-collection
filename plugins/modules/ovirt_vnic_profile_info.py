@@ -20,6 +20,14 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    ovirt_info_full_argument_spec,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -75,16 +83,6 @@ ovirt_vnic_profiles:
     type: list
 '''
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_dict_of_struct,
-    ovirt_info_full_argument_spec,
-)
-
 
 def main():
     argument_spec = ovirt_info_full_argument_spec(
@@ -112,7 +110,8 @@ def main():
             follow=",".join(module.params['follow'])
         )
         if module.params.get('name') and vnic_profiles:
-            vnic_profiles = [vnic_profile for vnic_profile in vnic_profiles if vnic_profile.name == module.params.get("name")]
+            vnic_profiles = [
+                vnic_profile for vnic_profile in vnic_profiles if vnic_profile.name == module.params.get("name")]
 
         result = dict(
             ovirt_vnic_profiles=[

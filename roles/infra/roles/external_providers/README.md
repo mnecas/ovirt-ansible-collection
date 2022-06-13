@@ -27,7 +27,6 @@ The items in `external_providers` list can contain the following parameters:
 
 More information about the parameters can be found in the [Ansible documentation](http://docs.ansible.com/ansible/latest/ovirt_external_provider_module.html).
 
-
 Example Playbook
 ----------------
 

@@ -20,6 +20,14 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    ovirt_info_full_argument_spec,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -121,16 +129,6 @@ ovirt_vms:
     type: list
 '''
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_dict_of_struct,
-    ovirt_info_full_argument_spec,
-)
-
 
 def main():
     argument_spec = ovirt_info_full_argument_spec(
@@ -165,7 +163,8 @@ def main():
             follow=",".join(module.params['follow']),
         )
         if module.params['next_run']:
-            vms = [vms_service.vm_service(vm.id).get(next_run=True) for vm in vms]
+            vms = [vms_service.vm_service(vm.id).get(
+                next_run=True) for vm in vms]
 
         result = dict(
             ovirt_vms=[

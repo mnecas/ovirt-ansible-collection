@@ -5,14 +5,15 @@ The `infra` role enables you to set up oVirt infrastructure including: mac pools
 
 Target machine
 --------------
+
 In case you use this role to do user management, it will use `ovirt-aaa-jdbc-tool`, which is located on engine machine,
 so you must execute the role on engine machine.
-
 
 Role Variables
 --------------
 
 ### Datacenter
+
 To setup/cleanup datacenter you can use following variables:
 
 | Name                     | Default value         | Description                          |
@@ -26,6 +27,7 @@ To setup/cleanup datacenter you can use following variables:
 | format_storages          | false                 | Specify whether to format ALL the storages that are going to be removed as part of the DC. Valid only when data_center_state == absent and recursive_cleanup == true. |
 
 ### MAC pools
+
 To setup MAC pools you can define list variable called `mac_pools`.
 The items in `mac_pools` list variable can contain the following parameters:
 
@@ -36,6 +38,7 @@ The items in `mac_pools` list variable can contain the following parameters:
 | mac_pool_allow_duplicates | UNDEF                 | If (true) allow a MAC address to be used multiple times in a pool. Default value is set by oVirt engine to false. |
 
 ### Clusters
+
 To setup clusters you can define list variable called `clusters`.
 The items in `clusters` list variable can contain the following parameters:
 
@@ -79,9 +82,11 @@ The items in `clusters` list variable can contain the following parameters:
 More information about the parameters can be found in the [ovirt_cluster](http://docs.ansible.com/ansible/ovirt_cluster_module.html) module documentation.
 
 #### Cluster Profile
+
 Possible `profile` options of cluster are `development` and `production`, their default values are described below:
 
 ##### Development
+
 The `development` profile of the cluster have predefined following vaules:
 
 | Parameter        | Value         |
@@ -94,6 +99,7 @@ The `development` profile of the cluster have predefined following vaules:
 | migration_policy | post_copy     |
 
 ##### Production
+
 The `production` profile of the cluster have predefined following vaules:
 
 | Parameter                         | Value              |
@@ -111,6 +117,7 @@ The `production` profile of the cluster have predefined following vaules:
 | fence_skip_if_sd_active           | true               |
 
 ### Hosts
+
 To setup hosts you can define list variable called `hosts`.
 The items in `hosts` list variable can contain the following parameters:
 
@@ -129,6 +136,7 @@ The items in `hosts` list variable can contain the following parameters:
 
 In case you cannot use `hosts` variable for whatever reason in your playbook, you can change this variable's name
 by overriding value of `hosts_var_name` variable. Example:
+
 ```yaml
 - name: Set up oVirt infrastructure
   hosts: engine
@@ -146,6 +154,7 @@ by overriding value of `hosts_var_name` variable. Example:
 ```
 
 ##### Host power managment
+
 The `power_management` have predefined following vaules:
 
 | Name          | Default value    | Description                           |
@@ -155,12 +164,13 @@ The `power_management` have predefined following vaules:
 | username      | UNDEF            | Username to be used to connect to power management interface.      |
 | password      | UNDEF            | Password of the user specified in C(username) parameter. |
 | type          | UNDEF            | Type of the power management. oVirt/RHV predefined values are drac5, ipmilan, rsa, bladecenter, alom, apc, apc_snmp, eps, wti, rsb, cisco_ucs, drac7, hpblade, ilo, ilo2, ilo3, ilo4, ilo_ssh, but user can have defined custom type. |
-| options       | UNDEF            | Dictionary of additional fence agent options (including Power Management slot). Additional information about options can be found at https://github.com/ClusterLabs/fence-agents/blob/master/doc/FenceAgentAPI.md. |
+| options       | UNDEF            | Dictionary of additional fence agent options (including Power Management slot). Additional information about options can be found at <https://github.com/ClusterLabs/fence-agents/blob/master/doc/FenceAgentAPI.md>. |
 | port          | UNDEF            | Power management interface port. |
 
 ### Networks
 
 ##### Logical networks
+
 To setup logical networks you can define list variable called `logical_networks`.
 The `logical_networks` list can contain following parameters:
 
@@ -179,6 +189,7 @@ The `logical_networks` list can contain following parameters:
 More information about the parameters can be found in the [ovirt_network](http://docs.ansible.com/ansible/ovirt_network_module.html) module documentation.
 
 ##### Host networks
+
 To setup host networks you can define list variable called `host_networks`.
 The `host_networks` list can contain following parameters:
 
@@ -196,6 +207,7 @@ The `host_networks` list can contain following parameters:
 More information about the parameters can be found in the [ovirt_host_network](http://docs.ansible.com/ansible/ovirt_host_network_module.html) module documentation.
 
 ### Storages
+
 To setup storages you can define dictionary variable called `storages`.
 In case of more than one connection, the storage connection update of this domain will be skipped.
 The value of item in `storages` dictionary can contain following parameters (the key is always a name of the storage):
@@ -215,7 +227,9 @@ The value of item in `storages` dictionary can contain following parameters (the
 More information about the parameters can be found in the [ovirt_storage_domain](http://docs.ansible.com/ansible/ovirt_storage_domain_module.html) module documentation.
 
 ### AAA JDBC
+
 ##### Users
+
 To setup users in AAA JDBC provider you can define dictionary variable called `users`.
 The items in `users` list can contain the following parameters:
 
@@ -229,6 +243,7 @@ The items in `users` list can contain the following parameters:
 | attributes    | UNDEF          | A dict of attributes related to the user. Available attributes: <ul><li>department</li><li>description</li><li>displayName</li><li>email</li><li>firstName</li><li>lasName</li><li>title</li></ul>|
 
 ##### User groups
+
 To setup user groups in AAA JDBC provider you can define dictionary variable called `user_groups`.
 The items in `user_groups` list can contain the following parameters:
 
@@ -240,6 +255,7 @@ The items in `user_groups` list can contain the following parameters:
 | users         | UNDEF          | List of users that belong to this group. |
 
 ### Permissions
+
 To setup permissions of users or groups you can define dictionary variable called `permissions`.
 The items in `permissions` list variable can contain following parameters:
 
@@ -254,6 +270,7 @@ The items in `permissions` list variable can contain following parameters:
 | object_name   | UNDEF          | Name of the object where the permission should be assigned. |
 
 ### External providers
+
 To setup external providers you can define dictionary variable called `external_providers`.
 The items in `external_providers` list variable can contain following parameters:
 

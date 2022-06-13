@@ -20,6 +20,16 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_params,
+    check_sdk,
+    create_connection,
+    equal,
+    ovirt_full_argument_spec,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -196,22 +206,11 @@ openstack_network_provider:
     type: dict
 '''
 
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_params,
-    check_sdk,
-    create_connection,
-    equal,
-    ovirt_full_argument_spec,
-)
 
 
 OS_VOLUME = 'os_volume'
@@ -247,13 +246,15 @@ class ExternalProviderModule(BaseModule):
 
     def build_entity(self):
         provider_type = self._provider_type(
-            requires_authentication=self._module.params.get('username') is not None,
+            requires_authentication=self._module.params.get(
+                'username') is not None,
         )
         if self._module.params.pop('type') == NETWORK:
             setattr(
                 provider_type,
                 'type',
-                otypes.OpenStackNetworkProviderType(self._module.params.pop('network_type'))
+                otypes.OpenStackNetworkProviderType(
+                    self._module.params.pop('network_type'))
             )
 
         for key, value in self.provider_module_params():

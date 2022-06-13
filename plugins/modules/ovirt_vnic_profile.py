@@ -5,6 +5,18 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    get_link_name,
+    ovirt_full_argument_spec,
+    search_by_name,
+    get_id_by_name
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -150,20 +162,6 @@ try:
 except ImportError:
     pass
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    get_link_name,
-    ovirt_full_argument_spec,
-    search_by_name,
-    get_id_by_name
-)
-
 
 class EntityVnicPorfileModule(BaseModule):
 
@@ -177,7 +175,8 @@ class EntityVnicPorfileModule(BaseModule):
         return get_id_by_name(self._get_dcs_service(), self.param('data_center'))
 
     def _get_network_id(self):
-        networks_service = self._get_dcs_service().service(self._get_dcs_id()).networks_service()
+        networks_service = self._get_dcs_service().service(
+            self._get_dcs_id()).networks_service()
         return get_id_by_name(networks_service, self.param('network'))
 
     def _get_qos_id(self):
@@ -197,7 +196,8 @@ class EntityVnicPorfileModule(BaseModule):
         if self.param('network_filter') == '' or self.param('pass_through') == 'enabled':
             network_filter = otypes.NetworkFilter()
         elif self.param('network_filter'):
-            network_filter = otypes.NetworkFilter(id=self._get_network_filter_id())
+            network_filter = otypes.NetworkFilter(
+                id=self._get_network_filter_id())
         return network_filter
 
     def _get_qos(self):
@@ -224,8 +224,10 @@ class EntityVnicPorfileModule(BaseModule):
         return otypes.VnicProfile(
             name=self.param('name'),
             network=otypes.Network(id=self._get_network_id()),
-            description=self.param('description') if self.param('description') is not None else None,
-            pass_through=otypes.VnicPassThrough(mode=otypes.VnicPassThroughMode(self.param('pass_through'))) if self.param('pass_through') else None,
+            description=self.param('description') if self.param(
+                'description') is not None else None,
+            pass_through=otypes.VnicPassThrough(mode=otypes.VnicPassThroughMode(
+                self.param('pass_through'))) if self.param('pass_through') else None,
             custom_properties=[
                 otypes.CustomProperty(
                     name=cp.get('name'),
@@ -244,8 +246,10 @@ class EntityVnicPorfileModule(BaseModule):
             if self.param('custom_properties'):
                 current = []
                 if entity.custom_properties:
-                    current = [(cp.name, cp.regexp, str(cp.value)) for cp in entity.custom_properties]
-                passed = [(cp.get('name'), cp.get('regexp'), str(cp.get('value'))) for cp in self.param('custom_properties') if cp]
+                    current = [(cp.name, cp.regexp, str(cp.value))
+                               for cp in entity.custom_properties]
+                passed = [(cp.get('name'), cp.get('regexp'), str(cp.get('value')))
+                          for cp in self.param('custom_properties') if cp]
                 return sorted(current) == sorted(passed)
             return True
 
@@ -259,7 +263,8 @@ class EntityVnicPorfileModule(BaseModule):
             equal(self.param('migratable'), getattr(entity, 'migratable', None)) and
             equal(self.param('pass_through'), pass_through.lower() if pass_through else None) and
             equal(self.param('description'), entity.description) and
-            equal(self.param('port_mirroring'), getattr(entity, 'port_mirroring', None))
+            equal(self.param('port_mirroring'), getattr(
+                entity, 'port_mirroring', None))
         )
 
 
@@ -275,12 +280,14 @@ def get_entity(vnic_services, entitynics_module):
 def check_params(module):
     if (module.params.get('port_mirroring') or module.params.get('network_filter') or module.params.get('qos'))\
             and module.params.get('pass_through') == 'enabled':
-        module.fail_json(msg="Cannot edit VM network interface profile. 'Port Mirroring,'Qos' and 'Network Filter' are not supported on passthrough profiles.")
+        module.fail_json(
+            msg="Cannot edit VM network interface profile. 'Port Mirroring,'Qos' and 'Network Filter' are not supported on passthrough profiles.")
 
 
 def main():
     argument_spec = ovirt_full_argument_spec(
-        state=dict(type='str', default='present', choices=['absent', 'present']),
+        state=dict(type='str', default='present',
+                   choices=['absent', 'present']),
         network=dict(type='str', required=True),
         data_center=dict(type='str', required=True),
         description=dict(type='str'),
@@ -313,12 +320,14 @@ def main():
         state = module.params['state']
         entity = get_entity(vnic_services, entitynics_module)
         if state == 'present':
-            ret = entitynics_module.create(entity=entity, force_create=entity is None)
+            ret = entitynics_module.create(
+                entity=entity, force_create=entity is None)
         elif state == 'absent':
             if entity is not None:
                 ret = entitynics_module.remove(entity=entity)
             else:
-                raise Exception("Vnic profile '%s' in network '%s' was not found." % (module.params['name'], module.params['network']))
+                raise Exception("Vnic profile '%s' in network '%s' was not found." % (
+                    module.params['name'], module.params['network']))
         module.exit_json(**ret)
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())

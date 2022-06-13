@@ -20,6 +20,16 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    equal,
+    get_id_by_name,
+    ovirt_full_argument_spec,
+    get_dict_of_struct,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -109,22 +119,11 @@ job:
     type: dict
 '''
 
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    equal,
-    get_id_by_name,
-    ovirt_full_argument_spec,
-    get_dict_of_struct,
-)
 
 
 def build_job(description):
@@ -157,14 +156,17 @@ def attach_steps(module, job_id, jobs_service):
             step_state = step.get('state', 'present')
             if step_state in ['present', 'started']:
                 if step_entity is None:
-                    steps_service.add(build_step(step.get('description'), job_id))
+                    steps_service.add(build_step(
+                        step.get('description'), job_id))
                     changed = True
             if step_entity is not None and step_entity.status not in [otypes.StepStatus.FINISHED, otypes.StepStatus.FAILED]:
                 if step_state in ['absent', 'finished']:
-                    steps_service.step_service(step_entity.id).end(succeeded=True)
+                    steps_service.step_service(
+                        step_entity.id).end(succeeded=True)
                     changed = True
                 elif step_state == 'failed':
-                    steps_service.step_service(step_entity.id).end(succeeded=False)
+                    steps_service.step_service(
+                        step_entity.id).end(succeeded=False)
                     changed = True
     return changed
 

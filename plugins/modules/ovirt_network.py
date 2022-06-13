@@ -20,6 +20,20 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    check_params,
+    create_connection,
+    equal,
+    ovirt_full_argument_spec,
+    search_by_name,
+    get_id_by_name,
+    get_dict_of_struct,
+    get_entity
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -164,33 +178,19 @@ network:
     type: dict
 '''
 
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    check_params,
-    create_connection,
-    equal,
-    ovirt_full_argument_spec,
-    search_by_name,
-    get_id_by_name,
-    get_dict_of_struct,
-    get_entity
-)
-
 
 class NetworksModule(BaseModule):
     def build_entity(self):
         if self.param('external_provider'):
             ons_service = self._connection.system_service().openstack_network_providers_service()
-            on_service = ons_service.provider_service(get_id_by_name(ons_service, self.param('external_provider')))
+            on_service = ons_service.provider_service(
+                get_id_by_name(ons_service, self.param('external_provider')))
         return otypes.Network(
             name=self._module.params['name'],
             comment=self._module.params['comment'],
@@ -206,7 +206,8 @@ class NetworksModule(BaseModule):
                 otypes.NetworkUsage.VM if self._module.params['vm_network'] else None
             ] if self._module.params['vm_network'] is not None else None,
             mtu=self._module.params['mtu'],
-            external_provider=otypes.OpenStackNetworkProvider(id=on_service.get().id)
+            external_provider=otypes.OpenStackNetworkProvider(
+                id=on_service.get().id)
             if self.param('external_provider') else None,
         )
 
@@ -217,7 +218,8 @@ class NetworksModule(BaseModule):
         if self.param('label') is None:
             return
 
-        labels_service = self._service.service(entity.id).network_labels_service()
+        labels_service = self._service.service(
+            entity.id).network_labels_service()
         labels = [lbl.id for lbl in labels_service.list()]
         if not self.param('label') in labels:
             if not self._module.check_mode:
@@ -230,7 +232,8 @@ class NetworksModule(BaseModule):
 
     def update_check(self, entity):
         self._update_label_assignments(entity)
-        vlan_tag_changed = equal(self._module.params.get('vlan_tag'), getattr(entity.vlan, 'id', None))
+        vlan_tag_changed = equal(self._module.params.get(
+            'vlan_tag'), getattr(entity.vlan, 'id', None))
         if self._module.params.get('vlan_tag') == -1:
             vlan_tag_changed = getattr(entity.vlan, 'id', None) is None
         return (
@@ -250,7 +253,8 @@ class ClusterNetworksModule(BaseModule):
         self._network_id = network_id
         self._cluster_network = cluster_network
         self._old_usages = []
-        self._cluster_network_entity = get_entity(self._service.network_service(network_id))
+        self._cluster_network_entity = get_entity(
+            self._service.network_service(network_id))
         if self._cluster_network_entity is not None:
             self._old_usages = self._cluster_network_entity.usages
 
@@ -338,11 +342,14 @@ def main():
             if module.params.get('external_provider') and module.params.get('name') not in [net.name for net in networks_service.list()]:
                 # Try to import network
                 ons_service = connection.system_service().openstack_network_providers_service()
-                on_service = ons_service.provider_service(get_id_by_name(ons_service, module.params.get('external_provider')))
+                on_service = ons_service.provider_service(get_id_by_name(
+                    ons_service, module.params.get('external_provider')))
                 on_networks_service = on_service.networks_service()
                 if module.params.get('name') in [net.name for net in on_networks_service.list()]:
-                    network_service = on_networks_service.network_service(get_id_by_name(on_networks_service, module.params.get('name')))
-                    network_service.import_(data_center=otypes.DataCenter(name=module.params.get('data_center')))
+                    network_service = on_networks_service.network_service(
+                        get_id_by_name(on_networks_service, module.params.get('name')))
+                    network_service.import_(data_center=otypes.DataCenter(
+                        name=module.params.get('data_center')))
                     imported = True
 
             ret = networks_module.create(search_params=search_params)
@@ -350,10 +357,13 @@ def main():
             # Update clusters networks:
             if module.params.get('clusters') is not None:
                 for param_cluster in module.params.get('clusters'):
-                    cluster = search_by_name(clusters_service, param_cluster.get('name'))
+                    cluster = search_by_name(
+                        clusters_service, param_cluster.get('name'))
                     if cluster is None:
-                        raise Exception("Cluster '%s' was not found." % param_cluster.get('name'))
-                    cluster_networks_service = clusters_service.service(cluster.id).networks_service()
+                        raise Exception("Cluster '%s' was not found." %
+                                        param_cluster.get('name'))
+                    cluster_networks_service = clusters_service.service(
+                        cluster.id).networks_service()
                     cluster_networks_module = ClusterNetworksModule(
                         network_id=ret['id'],
                         cluster_network=param_cluster,

@@ -5,6 +5,16 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    ovirt_info_full_argument_spec,
+    search_by_name,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
+import fnmatch
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -71,19 +81,6 @@ ovirt_snapshots:
 '''
 
 
-import fnmatch
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_dict_of_struct,
-    ovirt_info_full_argument_spec,
-    search_by_name,
-)
-
-
 def main():
     argument_spec = ovirt_info_full_argument_spec(
         vm=dict(required=True),
@@ -119,10 +116,12 @@ def main():
             ]
         elif module.params['snapshot_id']:
             snapshots = [
-                snapshots_service.snapshot_service(module.params['snapshot_id']).get()
+                snapshots_service.snapshot_service(
+                    module.params['snapshot_id']).get()
             ]
         else:
-            snapshots = snapshots_service.list(follow=",".join(module.params['follow']))
+            snapshots = snapshots_service.list(
+                follow=",".join(module.params['follow']))
 
         result = dict(
             ovirt_snapshots=[

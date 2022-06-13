@@ -5,6 +5,24 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_params,
+    check_sdk,
+    convert_to_bytes,
+    create_connection,
+    equal,
+    get_dict_of_struct,
+    get_entity,
+    get_link_name,
+    get_id_by_name,
+    ovirt_full_argument_spec,
+    search_by_attributes,
+    search_by_name,
+    wait,
+)
+import traceback
+from ansible.module_utils.basic import AnsibleModule
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -281,25 +299,6 @@ instancetype:
     type: dict
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-import traceback
-
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_params,
-    check_sdk,
-    convert_to_bytes,
-    create_connection,
-    equal,
-    get_dict_of_struct,
-    get_entity,
-    get_link_name,
-    get_id_by_name,
-    ovirt_full_argument_spec,
-    search_by_attributes,
-    search_by_name,
-    wait,
-)
 
 try:
     import ovirtsdk4.types as otypes
@@ -393,17 +392,20 @@ class InstanceTypeModule(BaseModule):
         )
 
     def __attach_watchdog(self, entity):
-        watchdogs_service = self._service.service(entity.id).watchdogs_service()
+        watchdogs_service = self._service.service(
+            entity.id).watchdogs_service()
         watchdog = self.param('watchdog')
         if watchdog is not None:
             current_watchdog = next(iter(watchdogs_service.list()), None)
             if watchdog.get('model') is None and current_watchdog:
-                watchdogs_service.watchdog_service(current_watchdog.id).remove()
+                watchdogs_service.watchdog_service(
+                    current_watchdog.id).remove()
                 return True
             elif watchdog.get('model') is not None and current_watchdog is None:
                 watchdogs_service.add(
                     otypes.Watchdog(
-                        model=otypes.WatchdogModel(watchdog.get('model').lower()),
+                        model=otypes.WatchdogModel(
+                            watchdog.get('model').lower()),
                         action=otypes.WatchdogAction(watchdog.get('action')),
                     )
                 )
@@ -411,12 +413,14 @@ class InstanceTypeModule(BaseModule):
             elif current_watchdog is not None:
                 if (
                     str(current_watchdog.model).lower() != watchdog.get('model').lower() or
-                    str(current_watchdog.action).lower() != watchdog.get('action').lower()
+                    str(current_watchdog.action).lower(
+                    ) != watchdog.get('action').lower()
                 ):
                     watchdogs_service.watchdog_service(current_watchdog.id).update(
                         otypes.Watchdog(
                             model=otypes.WatchdogModel(watchdog.get('model')),
-                            action=otypes.WatchdogAction(watchdog.get('action')),
+                            action=otypes.WatchdogAction(
+                                watchdog.get('action')),
                         )
                     )
                     return True
@@ -553,7 +557,8 @@ class InstanceTypeModule(BaseModule):
             equal(self.param('rng_device'), str(entity.rng_device.source) if entity.rng_device else None) and
             equal(self.param('rng_bytes'), entity.rng_device.rate.bytes if entity.rng_device else None) and
             equal(self.param('rng_period'), entity.rng_device.rate.period if entity.rng_device else None) and
-            equal(self.param('placement_policy'), str(entity.placement_policy.affinity) if entity.placement_policy else None)
+            equal(self.param('placement_policy'), str(
+                entity.placement_policy.affinity) if entity.placement_policy else None)
         )
 
 
@@ -570,7 +575,8 @@ def main():
         cpu_cores=dict(type='int'),
         cpu_threads=dict(type='int'),
         operating_system=dict(type='str'),
-        boot_devices=dict(type='list', choices=['cdrom', 'hd', 'network'], elements='str'),
+        boot_devices=dict(type='list', choices=[
+                          'cdrom', 'hd', 'network'], elements='str'),
         serial_console=dict(type='bool'),
         usb_support=dict(type='bool'),
         high_availability=dict(type='bool'),

@@ -5,6 +5,30 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    check_params,
+    create_connection,
+    convert_to_bytes,
+    equal,
+    follow_link,
+    get_id_by_name,
+    ovirt_full_argument_spec,
+    get_dict_of_struct,
+    search_by_name,
+    wait,
+)
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib.parse import urlparse
+from ansible.module_utils.six.moves.http_client import HTTPSConnection, IncompleteRead
+import inspect
+import traceback
+import time
+import subprocess
+import ssl
+import os
+import json
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -365,37 +389,13 @@ disk_attachment:
     type: dict
 '''
 
-import json
-import os
-import ssl
-import subprocess
-import time
-import traceback
-import inspect
 
-from ansible.module_utils.six.moves.http_client import HTTPSConnection, IncompleteRead
-from ansible.module_utils.six.moves.urllib.parse import urlparse
 try:
     import ovirtsdk4 as sdk
     import ovirtsdk4.types as otypes
     from ovirt_imageio import client
 except ImportError:
     pass
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    check_params,
-    create_connection,
-    convert_to_bytes,
-    equal,
-    follow_link,
-    get_id_by_name,
-    ovirt_full_argument_spec,
-    get_dict_of_struct,
-    search_by_name,
-    wait,
-)
 
 
 def _search_by_lun(disks_service, lun_id):
@@ -418,7 +418,8 @@ def create_transfer_connection(module, transfer, context, connect_timeout=10, re
         connection.connect()
     except Exception as e:
         # Typically ConnectionRefusedError or socket.gaierror.
-        module.warn("Cannot connect to %s, trying %s: %s" % (transfer.transfer_url, transfer.proxy_url, e))
+        module.warn("Cannot connect to %s, trying %s: %s" %
+                    (transfer.transfer_url, transfer.proxy_url, e))
 
         url = urlparse(transfer.proxy_url)
         connection = HTTPSConnection(
@@ -548,7 +549,8 @@ def finalize_transfer(connection, module, transfer_id):
 def download_disk_image(connection, module):
     transfers_service = connection.system_service().image_transfers_service()
     hosts_service = connection.system_service().hosts_service()
-    transfer = start_transfer(connection, module, otypes.ImageTransferDirection.DOWNLOAD)
+    transfer = start_transfer(
+        connection, module, otypes.ImageTransferDirection.DOWNLOAD)
     try:
         extra_args = {}
         parameters = inspect.signature(client.download).parameters
@@ -575,7 +577,8 @@ def download_disk_image(connection, module):
 def upload_disk_image(connection, module):
     transfers_service = connection.system_service().image_transfers_service()
     hosts_service = connection.system_service().hosts_service()
-    transfer = start_transfer(connection, module, otypes.ImageTransferDirection.UPLOAD)
+    transfer = start_transfer(
+        connection, module, otypes.ImageTransferDirection.UPLOAD)
     try:
         extra_args = {}
         parameters = inspect.signature(client.upload).parameters
@@ -633,15 +636,19 @@ class DisksModule(BaseModule):
                     name=self._module.params.get('storage_domain'),
                 ),
             ],
-            quota=otypes.Quota(id=self._module.params.get('quota_id')) if self.param('quota_id') else None,
+            quota=otypes.Quota(id=self._module.params.get(
+                'quota_id')) if self.param('quota_id') else None,
             shareable=self._module.params.get('shareable'),
-            sgio=otypes.ScsiGenericIO(self.param('scsi_passthrough')) if self.param('scsi_passthrough') else None,
+            sgio=otypes.ScsiGenericIO(self.param('scsi_passthrough')) if self.param(
+                'scsi_passthrough') else None,
             propagate_errors=self.param('propagate_errors'),
-            backup=otypes.DiskBackup(self.param('backup')) if self.param('backup') else None,
+            backup=otypes.DiskBackup(self.param(
+                'backup')) if self.param('backup') else None,
             wipe_after_delete=self.param('wipe_after_delete'),
             lun_storage=otypes.HostStorage(
                 host=otypes.Host(
-                    id=get_id_by_name(hosts_service, self._module.params.get('host'))
+                    id=get_id_by_name(
+                        hosts_service, self._module.params.get('host'))
                 ) if self.param('host') else None,
                 type=otypes.StorageType(
                     logical_unit.get('storage_type', 'iscsi')
@@ -662,7 +669,8 @@ class DisksModule(BaseModule):
             out = subprocess.check_output([
                 'qemu-img',
                 'measure',
-                '-O', 'qcow2' if self._module.params.get('format') == 'cow' else 'raw',
+                '-O', 'qcow2' if self._module.params.get(
+                    'format') == 'cow' else 'raw',
                 '--output', 'json',
                 self._module.params['upload_image_path']
             ])
@@ -685,7 +693,8 @@ class DisksModule(BaseModule):
             return changed
         # Initiate move:
         if self._module.params['storage_domain']:
-            new_disk_storage_id = get_id_by_name(sds_service, self._module.params['storage_domain'])
+            new_disk_storage_id = get_id_by_name(
+                sds_service, self._module.params['storage_domain'])
             if new_disk_storage_id in [sd.id for sd in disk.storage_domains]:
                 return changed
             changed = self.action(
@@ -696,7 +705,8 @@ class DisksModule(BaseModule):
                 storage_domain=otypes.StorageDomain(
                     id=new_disk_storage_id,
                 ),
-                post_action=lambda _: time.sleep(self._module.params['poll_interval']),
+                post_action=lambda _: time.sleep(
+                    self._module.params['poll_interval']),
             )['changed']
 
         if self._module.params['storage_domains']:
@@ -706,7 +716,8 @@ class DisksModule(BaseModule):
                     action='copy',
                     entity=disk,
                     action_condition=(
-                        lambda disk: new_disk_storage.id not in [sd.id for sd in disk.storage_domains]
+                        lambda disk: new_disk_storage.id not in [
+                            sd.id for sd in disk.storage_domains]
                     ),
                     wait_condition=lambda disk: disk.status == otypes.DiskStatus.OK,
                     storage_domain=otypes.StorageDomain(
@@ -786,7 +797,8 @@ def get_vm_service(connection, module):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent', 'attached', 'detached', 'exported', 'imported'],
+            choices=['present', 'absent', 'attached',
+                     'detached', 'exported', 'imported'],
             default='present'
         ),
         id=dict(default=None),
@@ -795,7 +807,8 @@ def main():
         vm_name=dict(default=None),
         vm_id=dict(default=None),
         size=dict(default=None),
-        interface=dict(default=None, choices=['virtio', 'ide', 'sata', 'virtio_scsi']),
+        interface=dict(default=None, choices=[
+                       'virtio', 'ide', 'sata', 'virtio_scsi']),
         storage_domain=dict(default=None),
         storage_domains=dict(default=None, type='list', elements='str'),
         profile=dict(default=None),
@@ -803,13 +816,15 @@ def main():
         format=dict(default='cow', choices=['raw', 'cow']),
         content_type=dict(
             default='data',
-            choices=['data', 'iso', 'hosted_engine', 'hosted_engine_sanlock', 'hosted_engine_metadata', 'hosted_engine_configuration']
+            choices=['data', 'iso', 'hosted_engine', 'hosted_engine_sanlock',
+                     'hosted_engine_metadata', 'hosted_engine_configuration']
         ),
         backup=dict(default=None, type='str', choices=['incremental']),
         sparse=dict(default=None, type='bool'),
         bootable=dict(default=None, type='bool'),
         shareable=dict(default=None, type='bool'),
-        scsi_passthrough=dict(default=None, type='str', choices=['disabled', 'filtered', 'unfiltered']),
+        scsi_passthrough=dict(default=None, type='str', choices=[
+                              'disabled', 'filtered', 'unfiltered']),
         uses_scsi_reservation=dict(default=None, type='bool'),
         pass_discard=dict(default=None, type='bool'),
         propagate_errors=dict(default=None, type='bool'),
@@ -860,11 +875,13 @@ def main():
         if lun:
             disk = _search_by_lun(disks_service, lun.get('id'))
         else:
-            disk = disks_module.search_entity(search_params=searchable_attributes(module))
+            disk = disks_module.search_entity(
+                search_params=searchable_attributes(module))
             if vm_service and disk:
                 # If the VM don't exist in VMs disks, but still it's found it means it was found
                 # for template with same name as VM, so we should force create the VM disk.
-                force_create = disk.id not in [a.disk.id for a in vm_service.disk_attachments_service().list() if a.disk]
+                force_create = disk.id not in [
+                    a.disk.id for a in vm_service.disk_attachments_service().list() if a.disk]
 
         ret = None
         # First take care of creating the VM, if needed:
@@ -881,7 +898,8 @@ def main():
                 _wait=True if module.params['upload_image_path'] else module.params['wait'],
             )
             is_new_disk = ret['changed']
-            ret['changed'] = ret['changed'] or disks_module.update_storage_domains(ret['id'])
+            ret['changed'] = ret['changed'] or disks_module.update_storage_domains(
+                ret['id'])
             # We need to pass ID to the module, so in case we want detach/attach disk
             # we have this ID specified to attach/detach method:
             module.params['id'] = ret['id']
@@ -889,12 +907,14 @@ def main():
             # Upload disk image in case it's new disk or force parameter is passed:
             if module.params['upload_image_path'] and (is_new_disk or module.params['force']):
                 if module.params['format'] == 'cow' and module.params['content_type'] == 'iso':
-                    module.warn("To upload an ISO image 'format' parameter needs to be set to 'raw'.")
+                    module.warn(
+                        "To upload an ISO image 'format' parameter needs to be set to 'raw'.")
                 uploaded = upload_disk_image(connection, module)
                 ret['changed'] = ret['changed'] or uploaded
             # Download disk image in case it's file don't exist or force parameter is passed:
             if (
-                module.params['download_image_path'] and (not os.path.isfile(module.params['download_image_path']) or module.params['force'])
+                module.params['download_image_path'] and (not os.path.isfile(
+                    module.params['download_image_path']) or module.params['force'])
             ):
                 downloaded = download_disk_image(connection, module)
                 ret['changed'] = ret['changed'] or downloaded
@@ -922,12 +942,15 @@ def main():
                     action='export',
                     action_condition=lambda d: module.params['image_provider'],
                     wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
-                    storage_domain=otypes.StorageDomain(name=module.params['image_provider']),
+                    storage_domain=otypes.StorageDomain(
+                        name=module.params['image_provider']),
                 )
         elif state == 'imported':
             glance_service = connection.system_service().openstack_image_providers_service()
-            image_provider = search_by_name(glance_service, module.params['image_provider'])
-            images_service = glance_service.service(image_provider.id).images_service()
+            image_provider = search_by_name(
+                glance_service, module.params['image_provider'])
+            images_service = glance_service.service(
+                image_provider.id).images_service()
             entity_id = get_id_by_name(images_service, module.params['name'])
             images_service.service(entity_id).import_(
                 storage_domain=otypes.StorageDomain(
@@ -961,7 +984,8 @@ def main():
                 if lun is None:
                     wait(
                         service=disk_attachments_service.service(ret['id']),
-                        condition=lambda d: follow_link(connection, d.disk).status == otypes.DiskStatus.OK,
+                        condition=lambda d: follow_link(
+                            connection, d.disk).status == otypes.DiskStatus.OK,
                         wait=module.params['wait'],
                         timeout=module.params['timeout'],
                     )
@@ -973,14 +997,16 @@ def main():
                 module.params.get('bootable'),
                 module.params.get('uses_scsi_reservation'),
                 module.params.get('pass_discard'), ]):
-            module.warn("Cannot use 'interface', 'activate', 'bootable', 'uses_scsi_reservation' or 'pass_discard' without specifing VM.")
+            module.warn(
+                "Cannot use 'interface', 'activate', 'bootable', 'uses_scsi_reservation' or 'pass_discard' without specifing VM.")
 
         # When the host parameter is specified and the disk is not being
         # removed, refresh the information about the LUN.
         if state != 'absent' and host:
             hosts_service = connection.system_service().hosts_service()
             host_id = get_id_by_name(hosts_service, host)
-            disks_service.disk_service(disk.id).refresh_lun(otypes.Host(id=host_id))
+            disks_service.disk_service(disk.id).refresh_lun(
+                otypes.Host(id=host_id))
 
         module.exit_json(**ret)
     except Exception as e:

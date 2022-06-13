@@ -20,6 +20,15 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_link_name,
+    ovirt_info_full_argument_spec,
+    search_by_name,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -91,21 +100,11 @@ ovirt_permissions:
     type: list
 '''
 
-import traceback
 
 try:
     import ovirtsdk4 as sdk
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_link_name,
-    ovirt_info_full_argument_spec,
-    search_by_name,
-)
 
 
 def _permissions_service(connection, module):
@@ -115,7 +114,8 @@ def _permissions_service(connection, module):
             iter(
                 service.list(
                     search='usrname={0}'.format(
-                        '{0}@{1}'.format(module.params['user_name'], module.params['authz_name'])
+                        '{0}@{1}'.format(module.params['user_name'],
+                                         module.params['authz_name'])
                     )
                 )
             ),

@@ -5,6 +5,17 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    ovirt_full_argument_spec,
+    search_by_name,
+    get_id_by_name,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -374,23 +385,11 @@ cluster:
     returned: On success if cluster is found.
 '''
 
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    ovirt_full_argument_spec,
-    search_by_name,
-    get_id_by_name,
-)
 
 
 class ClustersModule(BaseModule):
@@ -441,9 +440,11 @@ class ClustersModule(BaseModule):
         sched_policy = None
         if self.param('scheduling_policy'):
             sched_policies_service = self._connection.system_service().scheduling_policies_service()
-            sched_policy = search_by_name(sched_policies_service, self.param('scheduling_policy'))
+            sched_policy = search_by_name(
+                sched_policies_service, self.param('scheduling_policy'))
             if not sched_policy:
-                raise Exception("Scheduling policy '%s' was not found" % self.param('scheduling_policy'))
+                raise Exception("Scheduling policy '%s' was not found" %
+                                self.param('scheduling_policy'))
 
         return sched_policy
 
@@ -533,8 +534,10 @@ class ClustersModule(BaseModule):
             ) if self.param('resilience_policy') else None,
             fencing_policy=otypes.FencingPolicy(
                 enabled=self.param('fence_enabled'),
-                skip_if_gluster_bricks_up=self.param('fence_skip_if_gluster_bricks_up'),
-                skip_if_gluster_quorum_not_met=self.param('fence_skip_if_gluster_quorum_not_met'),
+                skip_if_gluster_bricks_up=self.param(
+                    'fence_skip_if_gluster_bricks_up'),
+                skip_if_gluster_quorum_not_met=self.param(
+                    'fence_skip_if_gluster_quorum_not_met'),
                 skip_if_connectivity_broken=otypes.SkipIfConnectivityBroken(
                     enabled=self.param('fence_skip_if_connectivity_broken'),
                     threshold=self.param('fence_connectivity_threshold'),
@@ -593,7 +596,8 @@ class ClustersModule(BaseModule):
                 self.param('switch_type')
             ) if self.param('switch_type') else None,
             mac_pool=otypes.MacPool(
-                id=get_id_by_name(self._connection.system_service().mac_pools_service(), self.param('mac_pool'))
+                id=get_id_by_name(self._connection.system_service(
+                ).mac_pools_service(), self.param('mac_pool'))
             ) if self.param('mac_pool') else None,
             external_network_providers=self._get_external_network_providers_entity(),
             custom_scheduling_policy_properties=[
@@ -616,9 +620,11 @@ class ClustersModule(BaseModule):
             return True
         if entity.external_network_providers is None:
             return not self.param('external_network_providers')
-        entity_providers = self._connection.follow_link(entity.external_network_providers)
+        entity_providers = self._connection.follow_link(
+            entity.external_network_providers)
         entity_provider_ids = [provider.id for provider in entity_providers]
-        entity_provider_names = [provider.name for provider in entity_providers]
+        entity_provider_names = [
+            provider.name for provider in entity_providers]
         for provider in self._get_external_network_providers():
             if provider.get('id'):
                 if provider.get('id') not in entity_provider_ids:
@@ -640,8 +646,10 @@ class ClustersModule(BaseModule):
             if self.param('scheduling_policy_properties'):
                 current = []
                 if entity.custom_scheduling_policy_properties:
-                    current = [(sp.name, str(sp.value)) for sp in entity.custom_scheduling_policy_properties]
-                passed = [(sp.get('name'), str(sp.get('value'))) for sp in self.param('scheduling_policy_properties') if sp]
+                    current = [(sp.name, str(sp.value))
+                               for sp in entity.custom_scheduling_policy_properties]
+                passed = [(sp.get('name'), str(sp.get('value')))
+                          for sp in self.param('scheduling_policy_properties') if sp]
                 for p in passed:
                     if p not in current:
                         return False
@@ -687,17 +695,20 @@ class ClustersModule(BaseModule):
             equal(self.__get_minor(self.param('compatibility_version')), self.__get_minor(entity.version)) and
             equal(self.__get_major(self.param('compatibility_version')), self.__get_major(entity.version)) and
             equal(
-                self.param('migration_bandwidth_limit') if self.param('migration_bandwidth') == 'custom' else None,
+                self.param('migration_bandwidth_limit') if self.param(
+                    'migration_bandwidth') == 'custom' else None,
                 entity.migration.bandwidth.custom_value
             ) and
             equal(
-                sorted(self.param('rng_sources')) if self.param('rng_sources') else None,
+                sorted(self.param('rng_sources')) if self.param(
+                    'rng_sources') else None,
                 sorted([
                     str(source) for source in entity.required_rng_sources
                 ])
             ) and
             equal(
-                get_id_by_name(self._connection.system_service().mac_pools_service(), self.param('mac_pool'), raise_error=False),
+                get_id_by_name(self._connection.system_service(
+                ).mac_pools_service(), self.param('mac_pool'), raise_error=False),
                 entity.mac_pool.id
             ) and
             self._update_check_external_network_providers(entity)
@@ -722,7 +733,8 @@ def main():
         trusted_service=dict(default=None, type='bool'),
         vm_reason=dict(default=None, type='bool'),
         host_reason=dict(default=None, type='bool'),
-        memory_policy=dict(default=None, choices=['disabled', 'server', 'desktop'], aliases=['performance_preset']),
+        memory_policy=dict(default=None, choices=[
+                           'disabled', 'server', 'desktop'], aliases=['performance_preset']),
         rng_sources=dict(default=None, type='list', elements='str'),
         spice_proxy=dict(default=None),
         fence_enabled=dict(default=None, type='bool'),
@@ -731,15 +743,21 @@ def main():
         fence_skip_if_sd_active=dict(default=None, type='bool'),
         fence_skip_if_connectivity_broken=dict(default=None, type='bool'),
         fence_connectivity_threshold=dict(default=None, type='int'),
-        resilience_policy=dict(default=None, choices=['migrate_highly_available', 'migrate', 'do_not_migrate']),
-        migration_bandwidth=dict(default=None, choices=['auto', 'hypervisor_default', 'custom']),
+        resilience_policy=dict(default=None, choices=[
+                               'migrate_highly_available', 'migrate', 'do_not_migrate']),
+        migration_bandwidth=dict(default=None, choices=[
+                                 'auto', 'hypervisor_default', 'custom']),
         migration_bandwidth_limit=dict(default=None, type='int'),
-        migration_auto_converge=dict(default=None, choices=['true', 'false', 'inherit']),
-        migration_compressed=dict(default=None, choices=['true', 'false', 'inherit']),
-        migration_encrypted=dict(default=None, choices=['true', 'false', 'inherit']),
+        migration_auto_converge=dict(default=None, choices=[
+                                     'true', 'false', 'inherit']),
+        migration_compressed=dict(default=None, choices=[
+                                  'true', 'false', 'inherit']),
+        migration_encrypted=dict(default=None, choices=[
+                                 'true', 'false', 'inherit']),
         migration_policy=dict(
             default=None,
-            choices=['legacy', 'minimal_downtime', 'suspend_workload', 'post_copy']
+            choices=['legacy', 'minimal_downtime',
+                     'suspend_workload', 'post_copy']
         ),
         serial_policy=dict(default=None, choices=['vm', 'host', 'custom']),
         serial_policy_value=dict(default=None),
@@ -753,7 +771,8 @@ def main():
         switch_type=dict(default=None, choices=['legacy', 'ovs']),
         compatibility_version=dict(default=None),
         mac_pool=dict(default=None),
-        external_network_providers=dict(default=None, type='list', elements='dict'),
+        external_network_providers=dict(
+            default=None, type='list', elements='dict'),
         scheduling_policy_properties=dict(type='list', elements='dict'),
         firewall_type=dict(choices=['iptables', 'firewalld'], default=None),
         gluster_tuned_profile=dict(default=None),

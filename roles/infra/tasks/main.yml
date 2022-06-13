@@ -15,7 +15,7 @@
       when: item[1] not in item[0]
       with_nested:
         - "{{ ovirt_infra_hosts }}"
-        - ['name']
+        - ["name"]
 
     - name: Login to oVirt
       ovirt_auth:

@@ -5,6 +5,16 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    ovirt_full_argument_spec,
+    search_by_name,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -119,22 +129,11 @@ agent:
     type: dict
 '''
 
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    ovirt_full_argument_spec,
-    search_by_name,
-)
 
 
 class HostModule(BaseModule):
@@ -156,8 +155,10 @@ class HostPmModule(BaseModule):
         self.entity = entity
 
     def build_entity(self):
-        last = next((s for s in sorted([a.order for a in self._service.list()])), 0)
-        order = self.param('order') if self.param('order') is not None else self.entity.order if self.entity else last + 1
+        last = next(
+            (s for s in sorted([a.order for a in self._service.list()])), 0)
+        order = self.param('order') if self.param(
+            'order') is not None else self.entity.order if self.entity else last + 1
         return otypes.Agent(
             address=self._module.params['address'],
             encrypt_options=self._module.params['encrypt_options'],
@@ -179,8 +180,10 @@ class HostPmModule(BaseModule):
             if self.param('options'):
                 current = []
                 if entity.options:
-                    current = [(opt.name, str(opt.value)) for opt in entity.options]
-                passed = [(k, str(v)) for k, v in self.param('options').items()]
+                    current = [(opt.name, str(opt.value))
+                               for opt in entity.options]
+                passed = [(k, str(v))
+                          for k, v in self.param('options').items()]
                 return sorted(current) == sorted(passed)
             return True
 
@@ -222,7 +225,8 @@ def main():
         connection = create_connection(auth)
         hosts_service = connection.system_service().hosts_service()
         host = search_by_name(hosts_service, module.params['name'])
-        fence_agents_service = hosts_service.host_service(host.id).fence_agents_service()
+        fence_agents_service = hosts_service.host_service(
+            host.id).fence_agents_service()
 
         host_pm_module = HostPmModule(
             connection=connection,

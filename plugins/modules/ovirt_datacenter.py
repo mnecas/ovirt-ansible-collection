@@ -5,6 +5,19 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    check_params,
+    create_connection,
+    equal,
+    ovirt_full_argument_spec,
+    search_by_name,
+    follow_link,
+    get_id_by_name
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -156,25 +169,11 @@ data_center:
     type: dict
 '''
 
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    check_params,
-    create_connection,
-    equal,
-    ovirt_full_argument_spec,
-    search_by_name,
-    follow_link,
-    get_id_by_name
-)
 
 
 class DatacentersModule(BaseModule):
@@ -216,14 +215,18 @@ class DatacentersModule(BaseModule):
             ) if self._module.params['quota_mode'] else None,
             local=self._module.params['local'],
             version=otypes.Version(
-                major=self.__get_major(self._module.params['compatibility_version']),
-                minor=self.__get_minor(self._module.params['compatibility_version']),
+                major=self.__get_major(
+                    self._module.params['compatibility_version']),
+                minor=self.__get_minor(
+                    self._module.params['compatibility_version']),
             ) if self._module.params['compatibility_version'] else None,
         )
 
     def update_check(self, entity):
-        minor = self.__get_minor(self._module.params.get('compatibility_version'))
-        major = self.__get_major(self._module.params.get('compatibility_version'))
+        minor = self.__get_minor(
+            self._module.params.get('compatibility_version'))
+        major = self.__get_major(
+            self._module.params.get('compatibility_version'))
         return (
             equal(getattr(self._get_mac_pool(), 'id', None), getattr(entity.mac_pool, 'id', None)) and
             equal(self._module.params.get('comment'), entity.comment) and

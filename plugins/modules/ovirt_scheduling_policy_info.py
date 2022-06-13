@@ -20,6 +20,15 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    ovirt_info_full_argument_spec,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
+import fnmatch
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -80,17 +89,6 @@ ovirt_scheduling_policies:
     type: list
 '''
 
-import fnmatch
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_dict_of_struct,
-    ovirt_info_full_argument_spec,
-)
-
 
 def main():
     argument_spec = ovirt_info_full_argument_spec(
@@ -124,7 +122,8 @@ def main():
                 sched_policies_service.service(module.params['id']).get()
             ]
         else:
-            sched_policies = sched_policies_service.list(follow=",".join(module.params['follow']))
+            sched_policies = sched_policies_service.list(
+                follow=",".join(module.params['follow']))
 
         result = dict(
             ovirt_scheduling_policies=[

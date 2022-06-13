@@ -20,6 +20,15 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    ovirt_info_full_argument_spec,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
+import fnmatch
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -96,17 +105,6 @@ ovirt_external_providers:
     type: list
 '''
 
-import fnmatch
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_dict_of_struct,
-    ovirt_info_full_argument_spec,
-)
-
 
 def _external_provider_service(provider_type, system_service):
     if provider_type == 'os_image':
@@ -155,7 +153,8 @@ def main():
                 if fnmatch.fnmatch(e.name, module.params['name'])
             ]
         else:
-            external_providers = external_providers_service.list(follow=",".join(module.params['follow']))
+            external_providers = external_providers_service.list(
+                follow=",".join(module.params['follow']))
 
         result = dict(
             ovirt_external_providers=[

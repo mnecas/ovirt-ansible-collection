@@ -5,6 +5,19 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    get_id_by_name,
+    ovirt_full_argument_spec,
+    wait,
+    get_dict_of_struct,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
+import time
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -313,8 +326,6 @@ iscsi_targets:
     type: list
 '''
 
-import time
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
@@ -322,18 +333,6 @@ try:
     from ovirtsdk4.types import HostStatus as hoststate
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    get_id_by_name,
-    ovirt_full_argument_spec,
-    wait,
-    get_dict_of_struct,
-)
 
 
 class HostsModule(BaseModule):
@@ -352,7 +351,8 @@ class HostsModule(BaseModule):
             address=self.param('address'),
             root_password=self.param('password'),
             ssh=otypes.Ssh(
-                authentication_method=otypes.SshAuthenticationMethod.PUBLICKEY if self.param('public_key') else None,
+                authentication_method=otypes.SshAuthenticationMethod.PUBLICKEY if self.param(
+                    'public_key') else None,
                 port=self.param('ssh_port'),
             ),
             spm=otypes.Spm(
@@ -408,11 +408,13 @@ class HostsModule(BaseModule):
         )
 
     def raise_host_exception(self):
-        events = self._connection.system_service().events_service().list(from_=int(self.start_event.index))
+        events = self._connection.system_service().events_service().list(
+            from_=int(self.start_event.index))
         error_events = [
             event.description for event in events
             if event.host is not None and (event.host.id == self.param('id') or event.host.name == self.param('name')) and
-            event.severity in [otypes.LogSeverity.WARNING, otypes.LogSeverity.ERROR]
+            event.severity in [otypes.LogSeverity.WARNING,
+                               otypes.LogSeverity.ERROR]
         ]
         if error_events:
             raise Exception("Error message: %s" % error_events)
@@ -504,7 +506,8 @@ def main():
         address=dict(default=None),
         ssh_port=dict(default=None, type='int'),
         password=dict(default=None, no_log=True),
-        public_key=dict(default=False, type='bool', aliases=['ssh_public_key']),
+        public_key=dict(default=False, type='bool',
+                        aliases=['ssh_public_key']),
         enroll_certificate=dict(default=False, type='bool'),
         kdump_integration=dict(default=None, choices=['enabled', 'disabled']),
         spm_priority=dict(default=None, type='int'),
@@ -520,7 +523,8 @@ def main():
         iscsi=dict(default=None, type='dict'),
         check_upgrade=dict(default=True, type='bool'),
         reboot_after_upgrade=dict(default=True, type='bool'),
-        vgpu_placement=dict(default=None, choices=['consolidated', 'separated']),
+        vgpu_placement=dict(default=None, choices=[
+                            'consolidated', 'separated']),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -537,7 +541,8 @@ def main():
         auth = module.params.pop('auth')
         connection = create_connection(auth)
         hosts_service = connection.system_service().hosts_service()
-        start_event = connection.system_service().events_service().list(max=1)[0]
+        start_event = connection.system_service(
+        ).events_service().list(max=1)[0]
         hosts_module = HostsModule(
             connection=connection,
             module=module,
@@ -554,7 +559,8 @@ def main():
                 ) if module.params.get('hosted_engine') is not None else None,
                 activate=module.params['activate'],
                 reboot=module.params.get('reboot_after_installation'),
-                result_state=(hoststate.MAINTENANCE if module.params['activate'] is False else hoststate.UP) if host is None else None,
+                result_state=(
+                    hoststate.MAINTENANCE if module.params['activate'] is False else hoststate.UP) if host is None else None,
                 fail_condition=hosts_module.failed_state_after_reinstall if host is not None else lambda h: False,
             )
             if module.params['activate'] and host is not None:
@@ -622,7 +628,8 @@ def main():
                         )
                     ) > 0
                 ),
-                post_action=lambda h: time.sleep(module.params['poll_interval']),
+                post_action=lambda h: time.sleep(
+                    module.params['poll_interval']),
                 fail_condition=lambda h: hosts_module.failed_state_after_reinstall(h) or (
                     len([
                         event
@@ -679,21 +686,25 @@ def main():
             ret = hosts_module.action(
                 action='fence',
                 action_condition=lambda h: h.status == hoststate.DOWN,
-                wait_condition=lambda h: h.status in [hoststate.UP, hoststate.MAINTENANCE],
+                wait_condition=lambda h: h.status in [
+                    hoststate.UP, hoststate.MAINTENANCE],
                 fail_condition=hosts_module.failed_state_after_reinstall,
                 fence_type='start',
             )
         elif state == 'stopped':
             hosts_module.action(
                 action='deactivate',
-                action_condition=lambda h: h.status not in [hoststate.MAINTENANCE, hoststate.DOWN],
-                wait_condition=lambda h: h.status in [hoststate.MAINTENANCE, hoststate.DOWN],
+                action_condition=lambda h: h.status not in [
+                    hoststate.MAINTENANCE, hoststate.DOWN],
+                wait_condition=lambda h: h.status in [
+                    hoststate.MAINTENANCE, hoststate.DOWN],
                 fail_condition=failed_state,
             )
             ret = hosts_module.action(
                 action='fence',
                 action_condition=lambda h: h.status != hoststate.DOWN,
-                wait_condition=lambda h: h.status == hoststate.DOWN if module.params['wait'] else True,
+                wait_condition=lambda h: h.status == hoststate.DOWN if module.params[
+                    'wait'] else True,
                 fail_condition=failed_state,
                 fence_type='stop',
             )
@@ -708,8 +719,10 @@ def main():
             # Deactivate host if not in maintanence:
             hosts_module.action(
                 action='deactivate',
-                action_condition=lambda h: h.status not in [hoststate.MAINTENANCE, hoststate.DOWN],
-                wait_condition=lambda h: h.status in [hoststate.MAINTENANCE, hoststate.DOWN],
+                action_condition=lambda h: h.status not in [
+                    hoststate.MAINTENANCE, hoststate.DOWN],
+                wait_condition=lambda h: h.status in [
+                    hoststate.MAINTENANCE, hoststate.DOWN],
                 fail_condition=failed_state,
             )
 

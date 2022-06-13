@@ -20,6 +20,20 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_params,
+    check_sdk,
+    create_connection,
+    equal,
+    get_link_name,
+    ovirt_full_argument_spec,
+    wait,
+    convert_to_bytes,
+    search_by_name,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -233,22 +247,6 @@ try:
 except ImportError:
     pass
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_params,
-    check_sdk,
-    create_connection,
-    equal,
-    get_link_name,
-    ovirt_full_argument_spec,
-    wait,
-    convert_to_bytes,
-    search_by_name,
-)
-
 
 class VmPoolsModule(BaseModule):
     def __init__(self, *args, **kwargs):
@@ -296,7 +294,8 @@ class VmPoolsModule(BaseModule):
             ) if vm.get('smartcard_enabled') is not None else None,
             sso=(
                 otypes.Sso(
-                    methods=[otypes.Method(id=otypes.SsoMethod.GUEST_AGENT)] if vm.get('sso') else []
+                    methods=[otypes.Method(id=otypes.SsoMethod.GUEST_AGENT)] if vm.get(
+                        'sso') else []
                 )
             ) if vm.get('sso') is not None else None,
             time_zone=otypes.TimeZone(
@@ -473,7 +472,8 @@ def main():
                 for vm in vms_service.list(search='pool=%s' % module.params['name']):
                     wait(
                         service=vms_service.service(vm.id),
-                        condition=lambda vm: vm.status in [otypes.VmStatus.DOWN, otypes.VmStatus.UP],
+                        condition=lambda vm: vm.status in [
+                            otypes.VmStatus.DOWN, otypes.VmStatus.UP],
                         timeout=module.params['timeout'],
                     )
 

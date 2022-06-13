@@ -20,6 +20,16 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    ovirt_info_full_argument_spec,
+    search_by_name,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
+import fnmatch
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -106,18 +116,6 @@ ovirt_affinity_labels:
     type: list
 '''
 
-import fnmatch
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_dict_of_struct,
-    ovirt_info_full_argument_spec,
-    search_by_name,
-)
-
 
 def main():
     argument_spec = ovirt_info_full_argument_spec(
@@ -142,7 +140,8 @@ def main():
         connection = create_connection(auth)
         affinity_labels_service = connection.system_service().affinity_labels_service()
         labels = []
-        all_labels = affinity_labels_service.list(follow=",".join(module.params['follow']))
+        all_labels = affinity_labels_service.list(
+            follow=",".join(module.params['follow']))
         if module.params['name']:
             labels.extend([
                 l for l in all_labels
@@ -151,7 +150,8 @@ def main():
         if module.params['host']:
             hosts_service = connection.system_service().hosts_service()
             if search_by_name(hosts_service, module.params['host']) is None:
-                raise Exception("Host '%s' was not found." % module.params['host'])
+                raise Exception("Host '%s' was not found." %
+                                module.params['host'])
             labels.extend([
                 label
                 for label in all_labels

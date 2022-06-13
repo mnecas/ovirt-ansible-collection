@@ -38,7 +38,8 @@ try:
     import ovirtsdk4 as sdk
     import ovirtsdk4.version as sdk_version
     import ovirtsdk4.types as otypes
-    HAS_SDK = ComparableVersion(sdk_version.VERSION) >= ComparableVersion('4.4.0')
+    HAS_SDK = ComparableVersion(
+        sdk_version.VERSION) >= ComparableVersion('4.4.0')
 except ImportError:
     HAS_SDK = False
 
@@ -283,7 +284,8 @@ def search_by_attributes(service, list_params=None, **kwargs):
     if 'search' in inspect.getargspec(service.list)[0]:
         res = service.list(
             # There must be double quotes around name, because some oVirt resources it's possible to create then with space in name.
-            search=' and '.join('{0}="{1}"'.format(k, v) for k, v in kwargs.items()),
+            search=' and '.join('{0}="{1}"'.format(k, v)
+                                for k, v in kwargs.items()),
             **list_params
         )
     else:
@@ -384,12 +386,14 @@ def wait(
             if condition(entity):
                 return
             elif fail_condition(entity):
-                raise Exception("Error while waiting on result state of the entity.")
+                raise Exception(
+                    "Error while waiting on result state of the entity.")
 
             # Sleep for `poll_interval` seconds if none of the conditions apply:
             time.sleep(float(poll_interval))
 
-        raise Exception("Timeout exceed while waiting on result state of the entity.")
+        raise Exception(
+            "Timeout exceed while waiting on result state of the entity.")
 
 
 def __get_auth_dict():
@@ -455,7 +459,8 @@ def ovirt_info_full_argument_spec(**kwargs):
         auth=__get_auth_dict(),
         fetch_nested=dict(default=False, type='bool'),
         nested_attributes=dict(type='list', default=list(), elements='str'),
-        follow=dict(default=list(), type='list', elements='str', aliases=['follows']),
+        follow=dict(default=list(), type='list',
+                    elements='str', aliases=['follows']),
     )
     spec.update(kwargs)
     return spec
@@ -867,11 +872,14 @@ class BaseModule(object):
         entity = None
 
         if 'id' in self._module.params and self._module.params['id'] is not None:
-            entity = get_entity(self._service.service(self._module.params['id']), get_params=list_params)
+            entity = get_entity(self._service.service(
+                self._module.params['id']), get_params=list_params)
         elif search_params is not None:
-            entity = search_by_attributes(self._service, list_params=list_params, **search_params)
+            entity = search_by_attributes(
+                self._service, list_params=list_params, **search_params)
         elif self._module.params.get('name') is not None:
-            entity = search_by_attributes(self._service, list_params=list_params, name=self._module.params['name'])
+            entity = search_by_attributes(
+                self._service, list_params=list_params, name=self._module.params['name'])
 
         return entity
 

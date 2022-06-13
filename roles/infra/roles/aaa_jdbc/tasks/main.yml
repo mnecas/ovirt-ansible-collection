@@ -52,7 +52,7 @@
 # but is not current password we continue with changed=false:
 - name: Manage internal users passwords
   no_log: true
-  command: "{{ aaa_jdbc_prefix }}/ovirt-aaa-jdbc-tool user password-reset {{ item.name }} --password=\"pass:{{ item.password }}\" --password-valid-to=\"{{ item.valid_to }}\""
+  command: '{{ aaa_jdbc_prefix }}/ovirt-aaa-jdbc-tool user password-reset {{ item.name }} --password="pass:{{ item.password }}" --password-valid-to="{{ item.valid_to }}"'
   with_items:
     - "{{ users | default([]) }}"
   register: out_users

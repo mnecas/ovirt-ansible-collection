@@ -5,6 +5,14 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    ovirt_info_full_argument_spec,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -80,23 +88,14 @@ ovirt_hosts:
     type: list
 '''
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_dict_of_struct,
-    ovirt_info_full_argument_spec,
-)
-
 
 def get_filtered_hosts(cluster_version, hosts, connection):
     # Filtering by cluster version returns only those which have same cluster version as input
     filtered_hosts = []
     for host in hosts:
         cluster = connection.follow_link(host.cluster)
-        cluster_version_host = str(cluster.version.major) + '.' + str(cluster.version.minor)
+        cluster_version_host = str(
+            cluster.version.major) + '.' + str(cluster.version.minor)
         if cluster_version_host == cluster_version:
             filtered_hosts.append(host)
     return filtered_hosts

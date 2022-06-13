@@ -14,13 +14,13 @@ he_data_center: Default
 he_cluster: Default
 he_local_vm_dir_path: /var/tmp
 he_local_vm_dir_prefix: localvm
-he_appliance_ova: ''
-he_root_ssh_pubkey: ''
-he_root_ssh_access: 'yes'
+he_appliance_ova: ""
+he_root_ssh_pubkey: ""
+he_root_ssh_access: "yes"
 he_apply_openscap_profile: false
 he_openscap_profile_name: stig
 he_enable_fips: false
-he_cdrom: ''
+he_cdrom: ""
 he_console_type: vnc
 he_video_device: vga
 he_graphic_device: vnc
@@ -32,7 +32,7 @@ he_storage_domain_name: hosted_storage
 he_ansible_host_name: localhost
 he_ipv4_subnet_prefix: "192.168.222"
 he_ipv6_subnet_prefix: fd00:1234:5678:900
-he_webui_forward_port: 6900  # by default already open for VM console
+he_webui_forward_port: 6900 # by default already open for VM console
 he_reserved_memory_MB: 512
 he_avail_memory_grace_MB: 200
 
@@ -74,14 +74,14 @@ he_pki_renew_on_restore: false
 he_enable_keycloak: true
 
 ## Storage domain vars:
-he_domain_type: null  # can be: nfs | iscsi | glusterfs | fc
+he_domain_type: null # can be: nfs | iscsi | glusterfs | fc
 he_storage_domain_addr: null
 
 ## NFS vars:
 ## Defaults are null, user should specify if NFS is chosen
-he_mount_options: ''
+he_mount_options: ""
 he_storage_domain_path: null
-he_nfs_version: auto  # can be: auto, v4 or v3
+he_nfs_version: auto # can be: auto, v4 or v3
 he_storage_if: null
 
 ## ISCSI vars:
@@ -100,16 +100,16 @@ he_discard: false
 # Define if using STATIC ip configuration
 he_vm_ip_addr: null
 he_vm_ip_prefix: null
-he_dns_addr: null  # up to 3 DNS servers IPs can be added
-he_vm_etc_hosts: false  # user can add lines to /etc/hosts on the engine VM
+he_dns_addr: null # up to 3 DNS servers IPs can be added
+he_vm_etc_hosts: false # user can add lines to /etc/hosts on the engine VM
 he_gateway: null
-he_network_test: 'dns'  # can be: 'dns', 'ping', 'tcp' or 'none'
+he_network_test: "dns" # can be: 'dns', 'ping', 'tcp' or 'none'
 he_tcp_t_address: null
 he_tcp_t_port: null
 
 # ovirt-hosted-engine-setup variables
 he_just_collect_network_interfaces: false
-he_libvirt_authfile: '/etc/ovirt-hosted-engine/virsh_auth.conf'
+he_libvirt_authfile: "/etc/ovirt-hosted-engine/virsh_auth.conf"
 he_offline_deployment: false
 he_additional_package_list: []
 

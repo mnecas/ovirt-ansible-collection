@@ -20,6 +20,21 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    get_dict_of_struct,
+    get_entity,
+    get_link_name,
+    ovirt_full_argument_spec,
+    search_by_name,
+    engine_supported
+)
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils import six
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -218,27 +233,11 @@ host_nic:
     type: dict
 '''
 
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
-from ansible.module_utils import six
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    get_dict_of_struct,
-    get_entity,
-    get_link_name,
-    ovirt_full_argument_spec,
-    search_by_name,
-    engine_supported
-)
 
 
 def get_bond_options(mode, usr_opts):
@@ -307,8 +306,10 @@ class HostNetworksModule(BaseModule):
         if network.get('custom_properties'):
             current = []
             if attachment.properties:
-                current = [(cp.name, str(cp.value)) for cp in attachment.properties]
-            passed = [(cp.get('name'), str(cp.get('value'))) for cp in network.get('custom_properties') if cp]
+                current = [(cp.name, str(cp.value))
+                           for cp in attachment.properties]
+            passed = [(cp.get('name'), str(cp.get('value')))
+                      for cp in network.get('custom_properties') if cp]
             if sorted(current) != sorted(passed):
                 attachment.properties = [
                     otypes.Property(
@@ -317,7 +318,8 @@ class HostNetworksModule(BaseModule):
                     ) for prop in network.get('custom_properties')
                 ]
                 if not self._module.check_mode:
-                    attachments_service.service(attachment.id).update(attachment)
+                    attachments_service.service(
+                        attachment.id).update(attachment)
                 self.changed = True
 
     def update_address(self, attachments_service, attachment, network):
@@ -327,7 +329,8 @@ class HostNetworksModule(BaseModule):
             if str(ip.ip.version) == network.get('version', 'v4'):
                 changed = False
                 if not equal(network.get('boot_protocol'), str(ip.assignment_method)):
-                    ip.assignment_method = otypes.BootProtocol(network.get('boot_protocol'))
+                    ip.assignment_method = otypes.BootProtocol(
+                        network.get('boot_protocol'))
                     changed = True
                 if not equal(network.get('address'), ip.ip.address):
                     ip.ip.address = network.get('address')
@@ -341,7 +344,8 @@ class HostNetworksModule(BaseModule):
 
                 if changed:
                     if not self._module.check_mode:
-                        attachments_service.service(attachment.id).update(attachment)
+                        attachments_service.service(
+                            attachment.id).update(attachment)
                     self.changed = True
                     break
 
@@ -357,10 +361,13 @@ class HostNetworksModule(BaseModule):
 
         # Check if bond configuration should be updated:
         if bond:
-            update = self.__compare_options(get_bond_options(bond.get('mode'), bond.get('options')), getattr(nic.bonding, 'options', []))
+            update = self.__compare_options(get_bond_options(
+                bond.get('mode'), bond.get('options')), getattr(nic.bonding, 'options', []))
             update = update or not equal(
-                sorted(bond.get('interfaces')) if bond.get('interfaces') else None,
-                sorted(get_link_name(self._connection, s) for s in nic.bonding.slaves)
+                sorted(bond.get('interfaces')) if bond.get(
+                    'interfaces') else None,
+                sorted(get_link_name(self._connection, s)
+                       for s in nic.bonding.slaves)
             )
 
         # Check if labels need to be updated on interface/bond:
@@ -388,7 +395,8 @@ class HostNetworksModule(BaseModule):
             # If attachment don't exists, we need to create it:
             if attachment is None:
                 return True
-            self.update_custom_properties(attachments_service, attachment, network)
+            self.update_custom_properties(
+                attachments_service, attachment, network)
             self.update_address(attachments_service, attachment, network)
 
         return update
@@ -463,7 +471,8 @@ def main():
 
         if (
             state == 'present' and
-            (nic is None or host_networks_module.has_update(nics_service.service(nic.id)))
+            (nic is None or host_networks_module.has_update(
+                nics_service.service(nic.id)))
         ):
             # Remove networks which are attached to different interface then user want:
             attachments_service = host_service.network_attachments_service()
@@ -493,7 +502,8 @@ def main():
                     otypes.HostNic(
                         name=bond.get('name'),
                         bonding=otypes.Bonding(
-                            options=get_bond_options(bond.get('mode'), bond.get('options')),
+                            options=get_bond_options(
+                                bond.get('mode'), bond.get('options')),
                             slaves=[
                                 otypes.HostNic(name=i) for i in bond.get('interfaces', [])
                             ],
@@ -550,7 +560,8 @@ def main():
             attachments = []
             nic_service = nics_service.nic_service(nic.id)
 
-            attached_labels = set([str(lbl.id) for lbl in nic_service.network_labels_service().list()])
+            attached_labels = set(
+                [str(lbl.id) for lbl in nic_service.network_labels_service().list()])
             if networks:
                 attachments_service = nic_service.network_attachments_service()
                 attachments = attachments_service.list()
@@ -561,11 +572,13 @@ def main():
 
             # Remove unmanaged networks:
             unmanaged_networks_service = host_service.unmanaged_networks_service()
-            unmanaged_networks = [(u.id, u.name) for u in unmanaged_networks_service.list()]
+            unmanaged_networks = [(u.id, u.name)
+                                  for u in unmanaged_networks_service.list()]
             for net_id, net_name in unmanaged_networks:
                 if net_name in network_names:
                     if not module.check_mode:
-                        unmanaged_networks_service.unmanaged_network_service(net_id).remove()
+                        unmanaged_networks_service.unmanaged_network_service(
+                            net_id).remove()
                     host_networks_module.changed = True
 
             # Need to check if there are any labels to be removed, as backend fail

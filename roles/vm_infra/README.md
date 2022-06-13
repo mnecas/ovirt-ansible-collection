@@ -30,7 +30,7 @@ machine `myvm2`.
 Limitations
 -----------
 
- * Does not support Ansible Check Mode (Dry Run).
+* Does not support Ansible Check Mode (Dry Run).
 
 Role Variables
 --------------
@@ -48,7 +48,6 @@ Role Variables
 | vm_infra_create_all_timeout    | vm_infra_create_single_timeout * (vms.length) | Total time to wait for all VMs to be created/started. |
 | vm_infra_wait_for_ip_retries   | 5             | Number of retries to check if VM is reporting it's IP address. |
 | vm_infra_wait_for_ip_delay     | 5             | Polling interval of IP address. Time in seconds to wait between check if VM reports IP address. |
-
 
 The `vms` and `profile` variables can contain following attributes, note that if you define same variable in both the value in `vms` has precendence:
 

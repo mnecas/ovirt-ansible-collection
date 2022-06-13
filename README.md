@@ -7,21 +7,22 @@ oVirt Ansible Collection
 Requirements
 ------------
 
- * Ansible core version 2.12.0 or higher
- * Python SDK version 4.5.0 or higher
- * Python netaddr library on the ansible controller node
+* Ansible core version 2.12.0 or higher
+* Python SDK version 4.5.0 or higher
+* Python netaddr library on the ansible controller node
 
 Upstream oVirt documentation
 --------------
-https://docs.ansible.com/ansible/latest/collections/ovirt/ovirt/index.html
+
+<https://docs.ansible.com/ansible/latest/collections/ovirt/ovirt/index.html>
 
 Downstream RHV documentation
 --------------
-https://cloud.redhat.com/ansible/automation-hub/redhat/rhv
 
+<https://cloud.redhat.com/ansible/automation-hub/redhat/rhv>
 
 Licenses
 -------
 
-- Apache License 2.0
-- GNU General Public License 3.0
+* Apache License 2.0
+* GNU General Public License 3.0

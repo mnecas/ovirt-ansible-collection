@@ -5,6 +5,23 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    convert_to_bytes,
+    create_connection,
+    equal,
+    get_dict_of_struct,
+    get_link_name,
+    get_id_by_name,
+    ovirt_full_argument_spec,
+    search_by_attributes,
+    search_by_name,
+    wait,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
+import time
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -583,29 +600,11 @@ template:
     type: dict
 '''
 
-import time
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    convert_to_bytes,
-    create_connection,
-    equal,
-    get_dict_of_struct,
-    get_link_name,
-    get_id_by_name,
-    ovirt_full_argument_spec,
-    search_by_attributes,
-    search_by_name,
-    wait,
-)
 
 
 class TemplatesModule(BaseModule):
@@ -626,8 +625,10 @@ class TemplatesModule(BaseModule):
             ) if self._module.params['vm'] else None,
             bios=(
                 otypes.Bios(
-                    boot_menu=otypes.BootMenu(enabled=self.param('boot_menu')) if self.param('boot_menu') is not None else None,
-                    type=otypes.BiosType[self.param('bios_type').upper()] if self.param('bios_type') is not None else None
+                    boot_menu=otypes.BootMenu(enabled=self.param('boot_menu')) if self.param(
+                        'boot_menu') is not None else None,
+                    type=otypes.BiosType[self.param('bios_type').upper()] if self.param(
+                        'bios_type') is not None else None
                 )
             ) if self.param('boot_menu') is not None or self.param('bios_type') is not None else None,
             description=self._module.params['description'],
@@ -652,7 +653,8 @@ class TemplatesModule(BaseModule):
             ) if self.param('usb_support') is not None else None,
             sso=(
                 otypes.Sso(
-                    methods=[otypes.Method(id=otypes.SsoMethod.GUEST_AGENT)] if self.param('sso') else []
+                    methods=[otypes.Method(id=otypes.SsoMethod.GUEST_AGENT)] if self.param(
+                        'sso') else []
                 )
             ) if self.param('sso') is not None else None,
             time_zone=otypes.TimeZone(
@@ -687,7 +689,8 @@ class TemplatesModule(BaseModule):
         named_templates = [t for t in templates if t.name == template_name]
         if not named_templates:
             return None
-        base_template = min(named_templates, key=lambda x: x.version.version_number)
+        base_template = min(
+            named_templates, key=lambda x: x.version.version_number)
         return otypes.Template(
             id=base_template.id
         )
@@ -935,7 +938,8 @@ def import_template(module, connection):
     # Wait until event with code 1158 for our template:
     templates_service = connection.system_service().templates_service()
     wait(
-        service=templates_service.template_service(imported_template.template.id),
+        service=templates_service.template_service(
+            imported_template.template.id),
         condition=lambda tmp: len(events_service.list(
             from_=int(last_event.id),
             search='type=1158 and message=*%s*' % tmp.name,
@@ -979,7 +983,8 @@ def searchable_attributes(module):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent', 'exported', 'imported', 'registered'],
+            choices=['present', 'absent', 'exported',
+                     'imported', 'registered'],
             default='present',
         ),
         id=dict(default=None),
@@ -998,7 +1003,8 @@ def main():
         storage_domain=dict(default=None),
         exclusive=dict(type='bool'),
         kvm=dict(type='dict'),
-        bios_type=dict(type='str', choices=['i440fx_sea_bios', 'q35_ovmf', 'q35_sea_bios', 'q35_secure_boot']),
+        bios_type=dict(type='str', choices=[
+                       'i440fx_sea_bios', 'q35_ovmf', 'q35_sea_bios', 'q35_secure_boot']),
         boot_menu=dict(type='bool'),
         clone_name=dict(default=None),
         image_provider=dict(default=None),
@@ -1070,7 +1076,8 @@ def main():
             if entity is not None:
                 template = entity
             export_service = templates_module._get_export_domain_service()
-            export_template = search_by_attributes(export_service.templates_service(), id=template.id)
+            export_template = search_by_attributes(
+                export_service.templates_service(), id=template.id)
 
             ret = templates_module.action(
                 entity=template,
@@ -1078,7 +1085,8 @@ def main():
                 action_condition=lambda t: export_template is None or module.params['exclusive'],
                 wait_condition=lambda t: t is not None,
                 post_action=templates_module.post_export_action,
-                storage_domain=otypes.StorageDomain(id=export_service.get().id),
+                storage_domain=otypes.StorageDomain(
+                    id=export_service.get().id),
                 exclusive=module.params['exclusive'],
             )
         elif state == 'imported':
@@ -1108,14 +1116,17 @@ def main():
                     templates_module._get_export_domain_service().images_service().list()
 
                     glance_service = connection.system_service().openstack_image_providers_service()
-                    image_provider = search_by_name(glance_service, module.params['image_provider'])
-                    images_service = glance_service.service(image_provider.id).images_service()
+                    image_provider = search_by_name(
+                        glance_service, module.params['image_provider'])
+                    images_service = glance_service.service(
+                        image_provider.id).images_service()
                 else:
                     images_service = templates_module._get_export_domain_service().templates_service()
                 template_name = module.params['image_disk'] or module.params['name']
                 entity = search_by_name(images_service, template_name)
                 if entity is None:
-                    raise Exception("Image/template '%s' was not found." % template_name)
+                    raise Exception(
+                        "Image/template '%s' was not found." % template_name)
 
                 images_service.service(entity.id).import_(
                     storage_domain=otypes.StorageDomain(
@@ -1131,19 +1142,24 @@ def main():
                     condition=lambda t: t.status == otypes.TemplateStatus.OK
                 )
                 if template is None:
-                    raise TimeoutError("Image/template '%s' could not be imported. Try again with larger timeout." % template_name)
-                ret = templates_module.create(result_state=otypes.TemplateStatus.OK)
+                    raise TimeoutError(
+                        "Image/template '%s' could not be imported. Try again with larger timeout." % template_name)
+                ret = templates_module.create(
+                    result_state=otypes.TemplateStatus.OK)
         elif state == 'registered':
             storage_domains_service = connection.system_service().storage_domains_service()
             # Find the storage domain with unregistered template:
-            sd_id = get_id_by_name(storage_domains_service, module.params['storage_domain'])
-            storage_domain_service = storage_domains_service.storage_domain_service(sd_id)
+            sd_id = get_id_by_name(
+                storage_domains_service, module.params['storage_domain'])
+            storage_domain_service = storage_domains_service.storage_domain_service(
+                sd_id)
             templates_service = storage_domain_service.templates_service()
 
             # Find the unregistered Template we want to register:
             templates = templates_service.list(unregistered=True)
             template = next(
-                (t for t in templates if (t.id == module.params['id'] or t.name == module.params['name'])),
+                (t for t in templates if (
+                    t.id == module.params['id'] or t.name == module.params['name'])),
                 None
             )
             changed = False
@@ -1151,12 +1167,14 @@ def main():
                 template = templates_module.search_entity()
                 if template is None:
                     raise ValueError(
-                        "Template '%s(%s)' wasn't found." % (module.params['name'], module.params['id'])
+                        "Template '%s(%s)' wasn't found." % (
+                            module.params['name'], module.params['id'])
                     )
             else:
                 # Register the template into the system:
                 changed = True
-                template_service = templates_service.template_service(template.id)
+                template_service = templates_service.template_service(
+                    template.id)
                 template_service.register(
                     allow_partial_import=module.params['allow_partial_import'],
                     cluster=otypes.Cluster(
@@ -1178,7 +1196,8 @@ def main():
                 else:
                     # Fetch template to initialize return.
                     template = template_service.get()
-                ret = templates_module.create(result_state=otypes.TemplateStatus.OK)
+                ret = templates_module.create(
+                    result_state=otypes.TemplateStatus.OK)
             ret = {
                 'changed': changed,
                 'id': template.id,

@@ -20,6 +20,16 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    get_id_by_name,
+    ovirt_full_argument_spec,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -125,22 +135,11 @@ tag:
     type: dict
 '''
 
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    get_id_by_name,
-    ovirt_full_argument_spec,
-)
 
 
 class TagsModule(BaseModule):
@@ -163,7 +162,8 @@ class TagsModule(BaseModule):
             return
 
         state = self.param('state')
-        entities_service = getattr(self._connection.system_service(), '%s_service' % name)()
+        entities_service = getattr(
+            self._connection.system_service(), '%s_service' % name)()
         current_vms = [
             vm.name
             for vm in entities_service.list(search='tag=%s' % self._module.params['name'])
@@ -172,7 +172,8 @@ class TagsModule(BaseModule):
         if state in ['present', 'attached', 'detached']:
             for entity_name in self._module.params[name]:
                 entity_id = get_id_by_name(entities_service, entity_name)
-                tags_service = entities_service.service(entity_id).tags_service()
+                tags_service = entities_service.service(
+                    entity_id).tags_service()
                 current_tags = [tag.name for tag in tags_service.list()]
                 # Assign the tag:
                 if state in ['attached', 'present']:
@@ -187,7 +188,8 @@ class TagsModule(BaseModule):
                 # Detach the tag:
                 elif state == 'detached':
                     if self._module.params['name'] in current_tags:
-                        tag_id = get_id_by_name(tags_service, self.param('name'))
+                        tag_id = get_id_by_name(
+                            tags_service, self.param('name'))
                         if not self._module.check_mode:
                             tags_service.tag_service(tag_id).remove()
                         self.changed = True
@@ -197,7 +199,8 @@ class TagsModule(BaseModule):
             for entity_name in [e for e in current_vms if e not in self._module.params[name]]:
                 if not self._module.check_mode:
                     entity_id = get_id_by_name(entities_service, entity_name)
-                    tags_service = entities_service.service(entity_id).tags_service()
+                    tags_service = entities_service.service(
+                        entity_id).tags_service()
                     tag_id = get_id_by_name(tags_service, self.param('name'))
                     tags_service.tag_service(tag_id).remove()
                 self.changed = True

@@ -5,6 +5,10 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import check_sdk
+from ansible.module_utils.basic import AnsibleModule
+import traceback
+import os
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -208,16 +212,11 @@ ovirt_auth:
             type: dict
 '''
 
-import os
-import traceback
 
 try:
     import ovirtsdk4 as sdk
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import check_sdk
 
 
 def main():
@@ -258,7 +257,8 @@ def main():
         return var
 
     url = get_required_parameter('url', 'OVIRT_URL', required=False)
-    hostname = get_required_parameter('hostname', 'OVIRT_HOSTNAME', required=False)
+    hostname = get_required_parameter(
+        'hostname', 'OVIRT_HOSTNAME', required=False)
     if url is None and hostname is None:
         module.fail_json(msg="You must specify either 'url' or 'hostname'.")
 
@@ -269,7 +269,8 @@ def main():
     password = get_required_parameter('password', 'OVIRT_PASSWORD')
     token = get_required_parameter('token', 'OVIRT_TOKEN')
     ca_file = get_required_parameter('ca_file', 'OVIRT_CAFILE')
-    insecure = params.get('insecure') if params.get('insecure') is not None else not bool(ca_file)
+    insecure = params.get('insecure') if params.get(
+        'insecure') is not None else not bool(ca_file)
 
     connection = sdk.Connection(
         url=url,

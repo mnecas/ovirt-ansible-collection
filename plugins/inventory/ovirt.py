@@ -3,6 +3,9 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
+import sys
 __metaclass__ = type
 
 # TODO Fix DOCUMENTATION to pass the ansible-test validate-modules
@@ -82,10 +85,6 @@ compose:
   ansible_host: devices["eth0"][0]
 '''
 
-import sys
-
-from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
-from ansible.errors import AnsibleError, AnsibleParserError
 
 HAS_OVIRT_LIB = False
 
@@ -196,7 +195,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
         hostname_preference = self.get_option('ovirt_hostname_preference')
         if not hostname_preference:
-            raise AnsibleParserError('Invalid value for option ovirt_hostname_preference: {0}'.format(hostname_preference))
+            raise AnsibleParserError(
+                'Invalid value for option ovirt_hostname_preference: {0}'.format(hostname_preference))
         hostname = None
 
         for preference in hostname_preference:
@@ -204,7 +204,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             if hostname is not None:
                 return hostname
 
-        raise AnsibleParserError("No valid name found for host id={0}".format(host.get('id')))
+        raise AnsibleParserError(
+            "No valid name found for host id={0}".format(host.get('id')))
 
     def _populate_from_source(self, source_data):
 
@@ -218,9 +219,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 self.inventory.set_variable(hostname, fact, value)
 
             strict = self.get_option('strict')
-            self._set_composite_vars(self.get_option('compose'), host, hostname, strict=strict)
-            self._add_host_to_composed_groups(self.get_option('groups'), host, hostname, strict=strict)
-            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname, strict=strict)
+            self._set_composite_vars(self.get_option(
+                'compose'), host, hostname, strict=strict)
+            self._add_host_to_composed_groups(self.get_option(
+                'groups'), host, hostname, strict=strict)
+            self._add_host_to_keyed_groups(self.get_option(
+                'keyed_groups'), host, hostname, strict=strict)
 
     def verify_file(self, path):
 
@@ -233,7 +237,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def parse(self, inventory, loader, path, cache=True):
 
         if not HAS_OVIRT_LIB:
-            raise AnsibleError('oVirt inventory script requires ovirt-engine-sdk-python >= 4.2.4')
+            raise AnsibleError(
+                'oVirt inventory script requires ovirt-engine-sdk-python >= 4.2.4')
 
         super(InventoryModule, self).parse(inventory, loader, path, cache)
 
@@ -244,10 +249,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             username=self.get_option('ovirt_username'),
             password=self.get_option('ovirt_password'),
             ca_file=self.get_option('ovirt_cafile'),
-            insecure=self.get_option('ovirt_insecure') if self.get_option('ovirt_insecure') is not None else not self.get_option('ovirt_cafile'),
+            insecure=self.get_option('ovirt_insecure') if self.get_option(
+                'ovirt_insecure') is not None else not self.get_option('ovirt_cafile'),
         )
 
-        query_filter = self._get_query_options(self.get_option('ovirt_query_filter', None))
+        query_filter = self._get_query_options(
+            self.get_option('ovirt_query_filter', None))
 
         cache_key = self.get_cache_key(path)
         source_data = None

@@ -5,6 +5,25 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_params,
+    check_sdk,
+    convert_to_bytes,
+    create_connection,
+    equal,
+    get_dict_of_struct,
+    get_entity,
+    get_link_name,
+    get_id_by_name,
+    ovirt_full_argument_spec,
+    search_by_attributes,
+    search_by_name,
+    wait,
+)
+from ansible.module_utils.basic import AnsibleModule
+import time
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -1363,31 +1382,11 @@ vm:
     returned: On success if VM is found.
     type: dict
 '''
-import traceback
-import time
 
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_params,
-    check_sdk,
-    convert_to_bytes,
-    create_connection,
-    equal,
-    get_dict_of_struct,
-    get_entity,
-    get_link_name,
-    get_id_by_name,
-    ovirt_full_argument_spec,
-    search_by_attributes,
-    search_by_name,
-    wait,
-)
 
 
 class VmsModule(BaseModule):
@@ -1408,10 +1407,12 @@ class VmsModule(BaseModule):
         if self._is_new:
             if self.param('template'):
                 clusters_service = self._connection.system_service().clusters_service()
-                cluster = search_by_name(clusters_service, self.param('cluster'))
+                cluster = search_by_name(
+                    clusters_service, self.param('cluster'))
                 data_center = self._connection.follow_link(cluster.data_center)
                 templates = templates_service.list(
-                    search='name=%s and datacenter=%s' % (self.param('template'), data_center.name)
+                    search='name=%s and datacenter=%s' % (
+                        self.param('template'), data_center.name)
                 )
                 if self.param('template_version'):
                     templates = [
@@ -1426,10 +1427,12 @@ class VmsModule(BaseModule):
                             data_center.name
                         )
                     )
-                template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
+                template = sorted(
+                    templates, key=lambda t: t.version.version_number, reverse=True)[0]
             else:
                 # If template isn't specified and VM is about to be created specify default template:
-                template = templates_service.template_service('00000000-0000-0000-0000-000000000000').get()
+                template = templates_service.template_service(
+                    '00000000-0000-0000-0000-000000000000').get()
         else:
             templates = templates_service.list(
                 search='vm.name=%s' % self.param('name')
@@ -1437,7 +1440,8 @@ class VmsModule(BaseModule):
             if templates:
                 template = templates[0]
                 if self.param('template') is not None and self.param('template') != template.name:
-                    raise ValueError("You can not change template of the Virtual Machine.")
+                    raise ValueError(
+                        "You can not change template of the Virtual Machine.")
 
         return template
 
@@ -1491,13 +1495,15 @@ class VmsModule(BaseModule):
             None
         )
         if not snap:
-            raise ValueError('Snapshot with the name "{0}" was not found.'.format(self.param('snapshot_name')))
+            raise ValueError('Snapshot with the name "{0}" was not found.'.format(
+                self.param('snapshot_name')))
         return snap
 
     def __get_placement_policy(self):
         hosts = None
         if self.param('placement_policy_hosts'):
-            hosts = [otypes.Host(name=host) for host in self.param('placement_policy_hosts')]
+            hosts = [otypes.Host(name=host)
+                     for host in self.param('placement_policy_hosts')]
         elif self.param('host'):
             hosts = [otypes.Host(name=self.param('host'))]
         if self.param('placement_policy'):
@@ -1522,7 +1528,8 @@ class VmsModule(BaseModule):
         placement_policy = self.__get_placement_policy()
         display = self.param('graphical_console') or dict()
 
-        disk_attachments = self.__get_storage_domain_and_all_template_disks(template)
+        disk_attachments = self.__get_storage_domain_and_all_template_disks(
+            template)
 
         return otypes.Vm(
             id=self.param('id'),
@@ -1534,14 +1541,18 @@ class VmsModule(BaseModule):
             template=otypes.Template(
                 id=template.id,
             ) if template else None,
-            use_latest_template_version=self.param('use_latest_template_version'),
-            stateless=self.param('stateless') or self.param('use_latest_template_version'),
+            use_latest_template_version=self.param(
+                'use_latest_template_version'),
+            stateless=self.param('stateless') or self.param(
+                'use_latest_template_version'),
             delete_protected=self.param('delete_protected'),
             custom_emulated_machine=self.param('custom_emulated_machine'),
             bios=(
                 otypes.Bios(
-                    boot_menu=otypes.BootMenu(enabled=self.param('boot_menu')) if self.param('boot_menu') is not None else None,
-                    type=otypes.BiosType[self.param('bios_type').upper()] if self.param('bios_type') is not None else None
+                    boot_menu=otypes.BootMenu(enabled=self.param('boot_menu')) if self.param(
+                        'boot_menu') is not None else None,
+                    type=otypes.BiosType[self.param('bios_type').upper()] if self.param(
+                        'bios_type') is not None else None
                 )
             ) if self.param('boot_menu') is not None or self.param('bios_type') is not None else None,
             console=(
@@ -1552,10 +1563,12 @@ class VmsModule(BaseModule):
             ) if self.param('usb_support') is not None else None,
             sso=(
                 otypes.Sso(
-                    methods=[otypes.Method(id=otypes.SsoMethod.GUEST_AGENT)] if self.param('sso') else []
+                    methods=[otypes.Method(id=otypes.SsoMethod.GUEST_AGENT)] if self.param(
+                        'sso') else []
                 )
             ) if self.param('sso') is not None else None,
-            quota=otypes.Quota(id=self._module.params.get('quota_id')) if self.param('quota_id') is not None else None,
+            quota=otypes.Quota(id=self._module.params.get('quota_id')) if self.param(
+                'quota_id') is not None else None,
             high_availability=otypes.HighAvailability(
                 enabled=self.param('high_availability'),
                 priority=self.param('high_availability_priority'),
@@ -1583,7 +1596,8 @@ class VmsModule(BaseModule):
                         otypes.VcpuPin(vcpu=int(pin['vcpu']), cpu_set=str(pin['cpu'])) for pin in self.param('cpu_pinning')
                     ],
                 ) if self.param('cpu_pinning') else None,
-                mode=otypes.CpuMode(self.param('cpu_mode')) if self.param('cpu_mode') else None,
+                mode=otypes.CpuMode(self.param('cpu_mode')) if self.param(
+                    'cpu_mode') else None,
             ) if any((
                 self.param('cpu_cores'),
                 self.param('cpu_sockets'),
@@ -1604,11 +1618,15 @@ class VmsModule(BaseModule):
                         otypes.BootDevice(dev) for dev in self.param('boot_devices')
                     ],
                 ) if self.param('boot_devices') else None,
-                cmdline=self.param('kernel_params') if self.param('kernel_params_persist') else None,
-                initrd=self.param('initrd_path') if self.param('kernel_params_persist') else None,
-                kernel=self.param('kernel_path') if self.param('kernel_params_persist') else None,
+                cmdline=self.param('kernel_params') if self.param(
+                    'kernel_params_persist') else None,
+                initrd=self.param('initrd_path') if self.param(
+                    'kernel_params_persist') else None,
+                kernel=self.param('kernel_path') if self.param(
+                    'kernel_params_persist') else None,
             ) if (
-                self.param('operating_system') or self.param('boot_devices') or self.param('kernel_params_persist')
+                self.param('operating_system') or self.param(
+                    'boot_devices') or self.param('kernel_params_persist')
             ) else None,
             type=otypes.VmType(
                 self.param('type')
@@ -1632,8 +1650,10 @@ class VmsModule(BaseModule):
                 ),
             ) if self.param('instance_type') else None,
             custom_compatibility_version=otypes.Version(
-                major=self._get_major(self.param('custom_compatibility_version')),
-                minor=self._get_minor(self.param('custom_compatibility_version')),
+                major=self._get_major(self.param(
+                    'custom_compatibility_version')),
+                minor=self._get_minor(self.param(
+                    'custom_compatibility_version')),
             ) if self.param('custom_compatibility_version') is not None else None,
             description=self.param('description'),
             comment=self.param('comment'),
@@ -1680,8 +1700,10 @@ class VmsModule(BaseModule):
                     value=str(cp.get('value')),
                 ) for cp in self.param('custom_properties') if cp
             ] if self.param('custom_properties') is not None else None,
-            initialization=self.get_initialization() if self.param('cloud_init_persist') else None,
-            snapshots=[otypes.Snapshot(id=snapshot.id)] if snapshot is not None else None,
+            initialization=self.get_initialization() if self.param(
+                'cloud_init_persist') else None,
+            snapshots=[otypes.Snapshot(
+                id=snapshot.id)] if snapshot is not None else None,
         )
 
     def _get_export_domain_service(self):
@@ -1696,7 +1718,8 @@ class VmsModule(BaseModule):
     def update_check(self, entity):
         res = self._update_check(entity)
         if entity.next_run_configuration_exists:
-            res = res and self._update_check(self._service.service(entity.id).get(next_run=True))
+            res = res and self._update_check(
+                self._service.service(entity.id).get(next_run=True))
 
         return res
 
@@ -1705,8 +1728,10 @@ class VmsModule(BaseModule):
             if self.param('cpu_pinning'):
                 current = []
                 if entity.cpu.cpu_tune:
-                    current = [(str(pin.cpu_set), int(pin.vcpu)) for pin in entity.cpu.cpu_tune.vcpu_pins]
-                passed = [(str(pin['cpu']), int(pin['vcpu'])) for pin in self.param('cpu_pinning')]
+                    current = [(str(pin.cpu_set), int(pin.vcpu))
+                               for pin in entity.cpu.cpu_tune.vcpu_pins]
+                passed = [(str(pin['cpu']), int(pin['vcpu']))
+                          for pin in self.param('cpu_pinning')]
                 return sorted(current) == sorted(passed)
             return True
 
@@ -1714,8 +1739,10 @@ class VmsModule(BaseModule):
             if self.param('custom_properties'):
                 current = []
                 if entity.custom_properties:
-                    current = [(cp.name, cp.regexp, str(cp.value)) for cp in entity.custom_properties]
-                passed = [(cp.get('name'), cp.get('regexp'), str(cp.get('value'))) for cp in self.param('custom_properties') if cp]
+                    current = [(cp.name, cp.regexp, str(cp.value))
+                               for cp in entity.custom_properties]
+                passed = [(cp.get('name'), cp.get('regexp'), str(cp.get('value')))
+                          for cp in self.param('custom_properties') if cp]
                 return sorted(current) == sorted(passed)
             return True
 
@@ -1802,7 +1829,8 @@ class VmsModule(BaseModule):
             equal(provided_vm_display.get('copy_paste_enabled'), getattr(vm_display, 'copy_paste_enabled', None)) and
             equal(provided_vm_display.get('file_transfer_enabled'), getattr(vm_display, 'file_transfer_enabled', None)) and
             equal(provided_vm_display.get('keyboard_layout'), getattr(vm_display, 'keyboard_layout', None)) and
-            equal(provided_vm_display.get('disconnect_action'), getattr(vm_display, 'disconnect_action', None), ignore_case=True)
+            equal(provided_vm_display.get('disconnect_action'), getattr(
+                vm_display, 'disconnect_action', None), ignore_case=True)
         )
 
     def pre_create(self, entity):
@@ -1880,17 +1908,20 @@ class VmsModule(BaseModule):
             else:
                 continue
             disks = list(filter(lambda x: (x.name == self.param('cd_iso') or x.id == self.param('cd_iso')) and
-                                (sd.type == otypes.StorageDomainType.ISO or x.content_type == otypes.DiskContentType.ISO),
+                                (sd.type == otypes.StorageDomainType.ISO or x.content_type ==
+                                 otypes.DiskContentType.ISO),
                                 self._connection.follow_link(disks)))
             if disks:
                 return disks
 
     def __get_cd_id(self):
         sds_service = self._connection.system_service().storage_domains_service()
-        sds = sds_service.list(search='name="{0}"'.format(self.param('storage_domain') if self.param('storage_domain') else "*"))
+        sds = sds_service.list(search='name="{0}"'.format(self.param(
+            'storage_domain') if self.param('storage_domain') else "*"))
         disks = self.__get_cds_from_sds(sds)
         if not disks:
-            raise ValueError('Was not able to find disk with name or id "{0}".'.format(self.param('cd_iso')))
+            raise ValueError('Was not able to find disk with name or id "{0}".'.format(
+                self.param('cd_iso')))
         if len(disks) > 1:
             raise ValueError('Found mutiple disks with same name "{0}" please use \
                 disk ID in "cd_iso" to specify which disk should be used.'.format(self.param('cd_iso')))
@@ -1902,7 +1933,8 @@ class VmsModule(BaseModule):
             if cd_iso_id:
                 cd_iso_id = self.__get_cd_id()
             vm_service = self._service.service(entity.id)
-            current = vm_service.get().status == otypes.VmStatus.UP and self.param('state') == 'running'
+            current = vm_service.get().status == otypes.VmStatus.UP and self.param(
+                'state') == 'running'
             cdroms_service = vm_service.cdroms_service()
             cdrom_device = cdroms_service.list()[0]
             cdrom_service = cdroms_service.cdrom_service(cdrom_device.id)
@@ -1927,11 +1959,13 @@ class VmsModule(BaseModule):
             if vm_host is not None:
                 hosts_service = self._connection.system_service().hosts_service()
                 clusters_service = self._connection.system_service().clusters_service()
-                current_vm_host = hosts_service.host_service(entity.host.id).get().name
+                current_vm_host = hosts_service.host_service(
+                    entity.host.id).get().name
                 if vm_host != current_vm_host:
                     if not self._module.check_mode:
                         vm_service.migrate(
-                            cluster=search_by_name(clusters_service, self.param('cluster')),
+                            cluster=search_by_name(
+                                clusters_service, self.param('cluster')),
                             host=otypes.Host(name=vm_host),
                             force=self.param('force_migrate')
                         )
@@ -2001,7 +2035,8 @@ class VmsModule(BaseModule):
                     timeout=self.param('timeout'),
                 )
                 wait(
-                    service=snapshots_service.snapshot_service(snap_stateless[0].id),
+                    service=snapshots_service.snapshot_service(
+                        snap_stateless[0].id),
                     condition=lambda snap: snap.snapshot_status == otypes.SnapshotStatus.OK,
                     wait=self.param('wait'),
                     timeout=self.param('timeout'),
@@ -2073,7 +2108,8 @@ class VmsModule(BaseModule):
                 )
 
             # Attach disk to VM:
-            disk_attachment = disk_attachments_service.attachment_service(disk_id)
+            disk_attachment = disk_attachments_service.attachment_service(
+                disk_id)
             if get_entity(disk_attachment) is None:
                 if not self._module.check_mode:
                     disk_attachments_service.add(
@@ -2126,7 +2162,8 @@ class VmsModule(BaseModule):
                         ) for x in numa], key=lambda x: x[0])
 
     def __attach_numa_nodes(self, entity):
-        numa_nodes_service = self._service.service(entity.id).numa_nodes_service()
+        numa_nodes_service = self._service.service(
+            entity.id).numa_nodes_service()
         existed_numa_nodes = numa_nodes_service.list()
         if len(self.param('numa_nodes')) > 0:
             # Remove all existing virtual numa nodes before adding new ones
@@ -2158,17 +2195,20 @@ class VmsModule(BaseModule):
         return self.__get_numa_serialized(numa_nodes_service.list()) != self.__get_numa_serialized(existed_numa_nodes)
 
     def __attach_watchdog(self, entity):
-        watchdogs_service = self._service.service(entity.id).watchdogs_service()
+        watchdogs_service = self._service.service(
+            entity.id).watchdogs_service()
         watchdog = self.param('watchdog')
         if watchdog is not None:
             current_watchdog = next(iter(watchdogs_service.list()), None)
             if watchdog.get('model') is None and current_watchdog:
-                watchdogs_service.watchdog_service(current_watchdog.id).remove()
+                watchdogs_service.watchdog_service(
+                    current_watchdog.id).remove()
                 return True
             elif watchdog.get('model') is not None and current_watchdog is None:
                 watchdogs_service.add(
                     otypes.Watchdog(
-                        model=otypes.WatchdogModel(watchdog.get('model').lower()),
+                        model=otypes.WatchdogModel(
+                            watchdog.get('model').lower()),
                         action=otypes.WatchdogAction(watchdog.get('action')),
                     )
                 )
@@ -2176,12 +2216,14 @@ class VmsModule(BaseModule):
             elif current_watchdog is not None:
                 if (
                     str(current_watchdog.model).lower() != watchdog.get('model').lower() or
-                    str(current_watchdog.action).lower() != watchdog.get('action').lower()
+                    str(current_watchdog.action).lower(
+                    ) != watchdog.get('action').lower()
                 ):
                     watchdogs_service.watchdog_service(current_watchdog.id).update(
                         otypes.Watchdog(
                             model=otypes.WatchdogModel(watchdog.get('model')),
-                            action=otypes.WatchdogAction(watchdog.get('action')),
+                            action=otypes.WatchdogAction(
+                                watchdog.get('action')),
                         )
                     )
                     return True
@@ -2285,7 +2327,8 @@ class VmsModule(BaseModule):
                 if state == 'absent' and device_name in device_names:
                     updated = True
                     if not self._module.check_mode:
-                        device_id = get_id_by_name(host_devices_service, device.get('name'))
+                        device_id = get_id_by_name(
+                            host_devices_service, device.get('name'))
                         host_devices_service.device_service(device_id).remove()
 
                 elif state == 'present' and device_name not in device_names:
@@ -2374,7 +2417,8 @@ def _get_lun_mappings(module):
             otypes.RegistrationLunMapping(
                 from_=otypes.Disk(
                     lun_storage=otypes.HostStorage(
-                        type=otypes.StorageType(lunMapping['source_storage_type'])
+                        type=otypes.StorageType(
+                            lunMapping['source_storage_type'])
                         if (lunMapping['source_storage_type'] in
                             ['iscsi', 'fcp']) else None,
                         logical_units=[
@@ -2386,18 +2430,24 @@ def _get_lun_mappings(module):
                 ) if lunMapping['source_logical_unit_id'] else None,
                 to=otypes.Disk(
                     lun_storage=otypes.HostStorage(
-                        type=otypes.StorageType(lunMapping['dest_storage_type'])
+                        type=otypes.StorageType(
+                            lunMapping['dest_storage_type'])
                         if (lunMapping['dest_storage_type'] in
                             ['iscsi', 'fcp']) else None,
                         logical_units=[
                             otypes.LogicalUnit(
                                 id=lunMapping.get('dest_logical_unit_id'),
                                 port=lunMapping.get('dest_logical_unit_port'),
-                                portal=lunMapping.get('dest_logical_unit_portal'),
-                                address=lunMapping.get('dest_logical_unit_address'),
-                                target=lunMapping.get('dest_logical_unit_target'),
-                                password=lunMapping.get('dest_logical_unit_password'),
-                                username=lunMapping.get('dest_logical_unit_username'),
+                                portal=lunMapping.get(
+                                    'dest_logical_unit_portal'),
+                                address=lunMapping.get(
+                                    'dest_logical_unit_address'),
+                                target=lunMapping.get(
+                                    'dest_logical_unit_target'),
+                                password=lunMapping.get(
+                                    'dest_logical_unit_password'),
+                                username=lunMapping.get(
+                                    'dest_logical_unit_username'),
                             )
                         ],
                     ),
@@ -2519,7 +2569,8 @@ def control_state(vm, vms_service, module):
         vm.status == otypes.VmStatus.UNKNOWN
     ):
         # Invalid states:
-        module.fail_json(msg="Not possible to control VM, if it's in '{0}' status".format(vm.status))
+        module.fail_json(
+            msg="Not possible to control VM, if it's in '{0}' status".format(vm.status))
     elif vm.status == otypes.VmStatus.POWERING_DOWN:
         if (force and state == 'stopped') or state == 'absent':
             vm_service.stop()
@@ -2533,7 +2584,8 @@ def control_state(vm, vms_service, module):
             # or ACPI on the VM or shutdown operation crashed:
             wait(
                 service=vm_service,
-                condition=lambda vm: vm.status in [otypes.VmStatus.DOWN, otypes.VmStatus.UP],
+                condition=lambda vm: vm.status in [
+                    otypes.VmStatus.DOWN, otypes.VmStatus.UP],
             )
 
 
@@ -2559,10 +2611,12 @@ def main():
         cpu_cores=dict(type='int'),
         cpu_shares=dict(type='int'),
         cpu_threads=dict(type='int'),
-        type=dict(type='str', choices=['server', 'desktop', 'high_performance']),
+        type=dict(type='str', choices=[
+                  'server', 'desktop', 'high_performance']),
         operating_system=dict(type='str'),
         cd_iso=dict(type='str'),
-        boot_devices=dict(type='list', choices=['cdrom', 'hd', 'network'], elements='str'),
+        boot_devices=dict(type='list', choices=[
+                          'cdrom', 'hd', 'network'], elements='str'),
         vnic_profile_mappings=dict(default=[], type='list', elements='dict'),
         cluster_mappings=dict(default=[], type='list', elements='dict'),
         role_mappings=dict(default=[], type='list', elements='dict'),
@@ -2572,7 +2626,8 @@ def main():
         domain_mappings=dict(default=[], type='list', elements='dict'),
         reassign_bad_macs=dict(default=None, type='bool'),
         boot_menu=dict(type='bool'),
-        bios_type=dict(type='str', choices=['i440fx_sea_bios', 'q35_ovmf', 'q35_sea_bios', 'q35_secure_boot']),
+        bios_type=dict(type='str', choices=[
+                       'i440fx_sea_bios', 'q35_ovmf', 'q35_sea_bios', 'q35_secure_boot']),
         serial_console=dict(type='bool'),
         usb_support=dict(type='bool'),
         sso=dict(type='bool'),
@@ -2588,7 +2643,8 @@ def main():
         nics=dict(type='list', default=[], elements='dict'),
         cloud_init=dict(type='dict'),
         cloud_init_nics=dict(type='list', default=[], elements='dict'),
-        cloud_init_persist=dict(type='bool', default=False, aliases=['sysprep_persist']),
+        cloud_init_persist=dict(
+            type='bool', default=False, aliases=['sysprep_persist']),
         kernel_params_persist=dict(type='bool', default=False),
         sysprep=dict(type='dict'),
         host=dict(type='str'),
@@ -2617,7 +2673,8 @@ def main():
         io_threads=dict(type='int', default=None),
         ballooning_enabled=dict(type='bool', default=None),
         rng_device=dict(type='str'),
-        numa_tune_mode=dict(type='str', choices=['interleave', 'preferred', 'strict']),
+        numa_tune_mode=dict(type='str', choices=[
+                            'interleave', 'preferred', 'strict']),
         numa_nodes=dict(type='list', default=[], elements='dict'),
         custom_properties=dict(type='list', elements='dict'),
         watchdog=dict(type='dict'),
@@ -2687,7 +2744,8 @@ def main():
             ret = vms_module.create(
                 entity=vm,
                 result_state=otypes.VmStatus.DOWN if vm is None else None,
-                update_params={'next_run': module.params['next_run']} if module.params['next_run'] is not None else None,
+                update_params={
+                    'next_run': module.params['next_run']} if module.params['next_run'] is not None else None,
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
                 _wait=True if not module.params['wait'] and state == 'running' else module.params['wait'],
@@ -2720,8 +2778,10 @@ def main():
                     ),
                     wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                     # Start action kwargs:
-                    use_cloud_init=True if not module.params.get('cloud_init_persist') and module.params.get('cloud_init') else None,
-                    use_sysprep=True if not module.params.get('cloud_init_persist') and module.params.get('sysprep') else None,
+                    use_cloud_init=True if not module.params.get(
+                        'cloud_init_persist') and module.params.get('cloud_init') else None,
+                    use_sysprep=True if not module.params.get(
+                        'cloud_init_persist') and module.params.get('sysprep') else None,
                     vm=otypes.Vm(
                         placement_policy=otypes.VmPlacementPolicy(
                             hosts=[otypes.Host(name=module.params['host'])]
@@ -2744,7 +2804,8 @@ def main():
                     vm_service = vms_service.vm_service(ret['id'])
                     graphics_consoles_service = vm_service.graphics_consoles_service()
                     graphics_console = graphics_consoles_service.list()[0]
-                    console_service = graphics_consoles_service.console_service(graphics_console.id)
+                    console_service = graphics_consoles_service.console_service(
+                        graphics_console.id)
                     ticket = console_service.remote_viewer_connection_file()
                     if ticket:
                         ret['vm']['remote_vv_file'] = ticket
@@ -2804,14 +2865,17 @@ def main():
             storage_domains_service = connection.system_service().storage_domains_service()
 
             # Find the storage domain with unregistered VM:
-            sd_id = get_id_by_name(storage_domains_service, module.params['storage_domain'])
-            storage_domain_service = storage_domains_service.storage_domain_service(sd_id)
+            sd_id = get_id_by_name(
+                storage_domains_service, module.params['storage_domain'])
+            storage_domain_service = storage_domains_service.storage_domain_service(
+                sd_id)
             vms_service = storage_domain_service.vms_service()
 
             # Find the unregistered VM we want to register:
             vms = vms_service.list(unregistered=True)
             vm = next(
-                (vm for vm in vms if (vm.id == module.params['id'] or vm.name == module.params['name'])),
+                (vm for vm in vms if (
+                    vm.id == module.params['id'] or vm.name == module.params['name'])),
                 None
             )
             changed = False
@@ -2819,7 +2883,8 @@ def main():
                 vm = vms_module.search_entity()
                 if vm is None:
                     raise ValueError(
-                        "VM '%s(%s)' wasn't found." % (module.params['name'], module.params['id'])
+                        "VM '%s(%s)' wasn't found." % (
+                            module.params['name'], module.params['id'])
                     )
             else:
                 # Register the vm into the system:
@@ -2839,8 +2904,10 @@ def main():
                         role_mappings=_get_role_mappings(module),
                         domain_mappings=_get_domain_mappings(module),
                         lun_mappings=_get_lun_mappings(module),
-                        affinity_group_mappings=_get_affinity_group_mappings(module),
-                        affinity_label_mappings=_get_affinity_label_mappings(module),
+                        affinity_group_mappings=_get_affinity_group_mappings(
+                            module),
+                        affinity_label_mappings=_get_affinity_label_mappings(
+                            module),
                     ) if (module.params['cluster_mappings']
                           or module.params['role_mappings']
                           or module.params['domain_mappings']
@@ -2862,7 +2929,8 @@ def main():
         elif state == 'exported':
             if module.params['export_domain']:
                 export_service = vms_module._get_export_domain_service()
-                export_vm = search_by_attributes(export_service.vms_service(), id=vm.id)
+                export_vm = search_by_attributes(
+                    export_service.vms_service(), id=vm.id)
 
                 ret = vms_module.action(
                     entity=vm,
@@ -2870,7 +2938,8 @@ def main():
                     action_condition=lambda t: export_vm is None or module.params['exclusive'],
                     wait_condition=lambda t: t is not None,
                     post_action=vms_module.post_export_action,
-                    storage_domain=otypes.StorageDomain(id=export_service.get().id),
+                    storage_domain=otypes.StorageDomain(
+                        id=export_service.get().id),
                     exclusive=module.params['exclusive'],
                 )
             elif module.params['export_ova']:

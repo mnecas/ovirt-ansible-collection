@@ -1,7 +1,6 @@
 ---
 - name: Set destination directory path
-  set_fact:
-    destdir=/var/log/ovirt-hosted-engine-setup/engine-logs-{{ ansible_date_time.iso8601 }}/
+  set_fact: destdir=/var/log/ovirt-hosted-engine-setup/engine-logs-{{ ansible_date_time.iso8601 }}/
 - name: Create destination directory
   file:
     state: directory

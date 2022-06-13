@@ -20,6 +20,15 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    check_params,
+    create_connection,
+    ovirt_full_argument_spec,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -102,21 +111,11 @@ user:
     type: dict
 '''
 
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    check_params,
-    create_connection,
-    ovirt_full_argument_spec,
-)
 
 
 def username(module):
@@ -173,17 +172,21 @@ def main():
                 }
             )
             if module.params['ssh_public_key'] is not None:
-                ssh_public_keys_service = users_service.user_service(ret['id']).ssh_public_keys_service()
+                ssh_public_keys_service = users_service.user_service(
+                    ret['id']).ssh_public_keys_service()
                 ssh_public_keys = ssh_public_keys_service.list()
                 if ssh_public_keys:
                     if not module.params['ssh_public_key']:
-                        ssh_public_keys_service.service(ssh_public_keys[0].id).remove()
+                        ssh_public_keys_service.service(
+                            ssh_public_keys[0].id).remove()
                         ret['changed'] = True
                     elif module.params['ssh_public_key'] != ssh_public_keys[0].content:
-                        ssh_public_keys_service.service(ssh_public_keys[0].id).update(otypes.SshPublicKey(content=module.params['ssh_public_key']))
+                        ssh_public_keys_service.service(ssh_public_keys[0].id).update(
+                            otypes.SshPublicKey(content=module.params['ssh_public_key']))
                         ret['changed'] = True
                 elif module.params['ssh_public_key']:
-                    ssh_public_keys_service.add(otypes.SshPublicKey(content=module.params['ssh_public_key']))
+                    ssh_public_keys_service.add(otypes.SshPublicKey(
+                        content=module.params['ssh_public_key']))
                     ret['changed'] = True
 
         elif state == 'absent':

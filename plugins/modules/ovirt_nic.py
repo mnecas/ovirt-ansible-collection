@@ -5,6 +5,17 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    get_link_name,
+    ovirt_full_argument_spec,
+    search_by_name,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -142,19 +153,6 @@ try:
 except ImportError:
     pass
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    get_link_name,
-    ovirt_full_argument_spec,
-    search_by_name,
-)
-
 
 class EntityNicsModule(BaseModule):
 
@@ -183,7 +181,8 @@ class EntityNicsModule(BaseModule):
             mac=otypes.Mac(
                 address=self._module.params.get('mac_address')
             ) if self._module.params.get('mac_address') else None,
-            linked=self.param('linked') if self.param('linked') is not None else None,
+            linked=self.param('linked') if self.param(
+                'linked') is not None else None,
         )
 
     def update_check(self, entity):
@@ -193,14 +192,16 @@ class EntityNicsModule(BaseModule):
                 equal(self._module.params.get('linked'), entity.linked) and
                 equal(self._module.params.get('name'), str(entity.name)) and
                 equal(self._module.params.get('profile'), get_link_name(self._connection, entity.vnic_profile)) and
-                equal(self._module.params.get('mac_address'), entity.mac.address)
+                equal(self._module.params.get(
+                    'mac_address'), entity.mac.address)
             )
         elif self._module.params.get('template'):
             return (
                 equal(self._module.params.get('interface'), str(entity.interface)) and
                 equal(self._module.params.get('linked'), entity.linked) and
                 equal(self._module.params.get('name'), str(entity.name)) and
-                equal(self._module.params.get('profile'), get_link_name(self._connection, entity.vnic_profile))
+                equal(self._module.params.get('profile'), get_link_name(
+                    self._connection, entity.vnic_profile))
             )
 
 
@@ -215,7 +216,8 @@ def get_vnics(networks_service, network, connection):
 
 def main():
     argument_spec = ovirt_full_argument_spec(
-        state=dict(type='str', default='present', choices=['absent', 'plugged', 'present', 'unplugged']),
+        state=dict(type='str', default='present', choices=[
+                   'absent', 'plugged', 'present', 'unplugged']),
         vm=dict(type='str'),
         id=dict(default=None),
         template=dict(type='str'),
@@ -310,7 +312,8 @@ def main():
                 else:
                     raise Exception(
                         "You didn't specify any vnic profile. "
-                        "Following vnic profiles are in system: '%s', please specify one of them" % ([vnic.name for vnic in vnics])
+                        "Following vnic profiles are in system: '%s', please specify one of them" % (
+                            [vnic.name for vnic in vnics])
                     )
         # Handle appropriate action:
         state = module.params['state']

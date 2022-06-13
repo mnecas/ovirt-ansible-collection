@@ -11,8 +11,8 @@ Ansible version >= 2.9.21 and < 2.10.0
 * A fully qualified domain name prepared for your Engine and the host. Forward and reverse lookup records must both be set in the DNS.
 * `/var/tmp` has at least 5 GB of free space.
 * Unless you are using Gluster, you must have prepared storage for your Hosted-Engine environment (choose one):
-    * [Prepare NFS Storage](https://ovirt.org/documentation/admin-guide/chap-Storage/#preparing-nfs-storage)
-    * [Prepare ISCSI Storage](https://ovirt.org/documentation/admin-guide/chap-Storage/#preparing-iscsi-storage)
+  * [Prepare NFS Storage](https://ovirt.org/documentation/admin-guide/chap-Storage/#preparing-nfs-storage)
+  * [Prepare ISCSI Storage](https://ovirt.org/documentation/admin-guide/chap-Storage/#preparing-iscsi-storage)
 
 # Role variables
 
@@ -68,7 +68,6 @@ Ansible version >= 2.9.21 and < 2.10.0
 | he_nfs_version | auto | NFS version.  available options: *auto*, *v4*, *v3*, *v4_0*, *v4_1*, *v4_2*
 | he_storage_if | null | the network interface name that is connected to the storage network, assumed to be pre-configured|
 
-
 ## ISCSI Variables
 
 | Name                            | Default value         |  Description                                              |
@@ -96,6 +95,7 @@ define the following variables:
 | he_vm_etc_hosts | false | Add engine VM ip and fqdn to /etc/hosts on the host |
 
 # Example Playbook
+
 This is a simple example for deploying Hosted-Engine with NFS storage domain.
 
 This role can be used to deploy on localhost (the ansible controller one) or on a remote host (please correctly set he_ansible_host_name).
@@ -188,105 +188,105 @@ he_admin_password: 123456
 iSCSI Transport Class version 2.0-870
 version 6.2.0.874-7
 Target: iqn.2017-10.com.redhat.stirabos:data (non-flash)
-	Current Portal: 192.168.1.125:3260,1
-	Persistent Portal: 192.168.1.125:3260,1
-		**********
-		Interface:
-		**********
-		Iface Name: default
-		Iface Transport: tcp
-		Iface Initiatorname: iqn.1994-05.com.redhat:6a4517b3773a
-		Iface IPaddress: 192.168.1.14
-		Iface HWaddress: <empty>
-		Iface Netdev: <empty>
-		SID: 1
-		iSCSI Connection State: LOGGED IN
-		iSCSI Session State: LOGGED_IN
-		Internal iscsid Session State: NO CHANGE
-		*********
-		Timeouts:
-		*********
-		Recovery Timeout: 5
-		Target Reset Timeout: 30
-		LUN Reset Timeout: 30
-		Abort Timeout: 15
-		*****
-		CHAP:
-		*****
-		username: <empty>
-		password: ********
-		username_in: <empty>
-		password_in: ********
-		************************
-		Negotiated iSCSI params:
-		************************
-		HeaderDigest: None
-		DataDigest: None
-		MaxRecvDataSegmentLength: 262144
-		MaxXmitDataSegmentLength: 131072
-		FirstBurstLength: 131072
-		MaxBurstLength: 16776192
-		ImmediateData: Yes
-		InitialR2T: Yes
-		MaxOutstandingR2T: 1
-		************************
-		Attached SCSI devices:
-		************************
-		Host Number: 3	State: running
-		scsi3 Channel 00 Id 0 Lun: 2
-			Attached scsi disk sdb		State: running
-		scsi3 Channel 00 Id 0 Lun: 3
-			Attached scsi disk sdc		State: running
+ Current Portal: 192.168.1.125:3260,1
+ Persistent Portal: 192.168.1.125:3260,1
+  **********
+  Interface:
+  **********
+  Iface Name: default
+  Iface Transport: tcp
+  Iface Initiatorname: iqn.1994-05.com.redhat:6a4517b3773a
+  Iface IPaddress: 192.168.1.14
+  Iface HWaddress: <empty>
+  Iface Netdev: <empty>
+  SID: 1
+  iSCSI Connection State: LOGGED IN
+  iSCSI Session State: LOGGED_IN
+  Internal iscsid Session State: NO CHANGE
+  *********
+  Timeouts:
+  *********
+  Recovery Timeout: 5
+  Target Reset Timeout: 30
+  LUN Reset Timeout: 30
+  Abort Timeout: 15
+  *****
+  CHAP:
+  *****
+  username: <empty>
+  password: ********
+  username_in: <empty>
+  password_in: ********
+  ************************
+  Negotiated iSCSI params:
+  ************************
+  HeaderDigest: None
+  DataDigest: None
+  MaxRecvDataSegmentLength: 262144
+  MaxXmitDataSegmentLength: 131072
+  FirstBurstLength: 131072
+  MaxBurstLength: 16776192
+  ImmediateData: Yes
+  InitialR2T: Yes
+  MaxOutstandingR2T: 1
+  ************************
+  Attached SCSI devices:
+  ************************
+  Host Number: 3 State: running
+  scsi3 Channel 00 Id 0 Lun: 2
+   Attached scsi disk sdb  State: running
+  scsi3 Channel 00 Id 0 Lun: 3
+   Attached scsi disk sdc  State: running
 Target: iqn.2017-10.com.redhat.stirabos:he (non-flash)
-	Current Portal: 192.168.1.125:3260,1
-	Persistent Portal: 192.168.1.125:3260,1
-		**********
-		Interface:
-		**********
-		Iface Name: default
-		Iface Transport: tcp
-		Iface Initiatorname: iqn.1994-05.com.redhat:6a4517b3773a
-		Iface IPaddress: 192.168.1.14
-		Iface HWaddress: <empty>
-		Iface Netdev: <empty>
-		SID: 4
-		iSCSI Connection State: LOGGED IN
-		iSCSI Session State: LOGGED_IN
-		Internal iscsid Session State: NO CHANGE
-		*********
-		Timeouts:
-		*********
-		Recovery Timeout: 5
-		Target Reset Timeout: 30
-		LUN Reset Timeout: 30
-		Abort Timeout: 15
-		*****
-		CHAP:
-		*****
-		username: <empty>
-		password: ********
-		username_in: <empty>
-		password_in: ********
-		************************
-		Negotiated iSCSI params:
-		************************
-		HeaderDigest: None
-		DataDigest: None
-		MaxRecvDataSegmentLength: 262144
-		MaxXmitDataSegmentLength: 131072
-		FirstBurstLength: 131072
-		MaxBurstLength: 16776192
-		ImmediateData: Yes
-		InitialR2T: Yes
-		MaxOutstandingR2T: 1
-		************************
-		Attached SCSI devices:
-		************************
-		Host Number: 6	State: running
-		scsi6 Channel 00 Id 0 Lun: 0
-			Attached scsi disk sdd		State: running
-		scsi6 Channel 00 Id 0 Lun: 1
-			Attached scsi disk sde		State: running
+ Current Portal: 192.168.1.125:3260,1
+ Persistent Portal: 192.168.1.125:3260,1
+  **********
+  Interface:
+  **********
+  Iface Name: default
+  Iface Transport: tcp
+  Iface Initiatorname: iqn.1994-05.com.redhat:6a4517b3773a
+  Iface IPaddress: 192.168.1.14
+  Iface HWaddress: <empty>
+  Iface Netdev: <empty>
+  SID: 4
+  iSCSI Connection State: LOGGED IN
+  iSCSI Session State: LOGGED_IN
+  Internal iscsid Session State: NO CHANGE
+  *********
+  Timeouts:
+  *********
+  Recovery Timeout: 5
+  Target Reset Timeout: 30
+  LUN Reset Timeout: 30
+  Abort Timeout: 15
+  *****
+  CHAP:
+  *****
+  username: <empty>
+  password: ********
+  username_in: <empty>
+  password_in: ********
+  ************************
+  Negotiated iSCSI params:
+  ************************
+  HeaderDigest: None
+  DataDigest: None
+  MaxRecvDataSegmentLength: 262144
+  MaxXmitDataSegmentLength: 131072
+  FirstBurstLength: 131072
+  MaxBurstLength: 16776192
+  ImmediateData: Yes
+  InitialR2T: Yes
+  MaxOutstandingR2T: 1
+  ************************
+  Attached SCSI devices:
+  ************************
+  Host Number: 6 State: running
+  scsi6 Channel 00 Id 0 Lun: 0
+   Attached scsi disk sdd  State: running
+  scsi6 Channel 00 Id 0 Lun: 1
+   Attached scsi disk sde  State: running
 [root@c75he20180820h1 ~]# lsblk /dev/sdd
 NAME                                MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINT
 sdd                                   8:48   0  100G  0 disk
@@ -303,20 +303,24 @@ Logout of [sid: 4, target: iqn.2017-10.com.redhat.stirabos:he, portal: 192.168.1
 ```
 
 # Usage
+
 1. Check all the prerequisites and requirements are met.
 2. Encrypt passwords.yml
+
 ```sh
-$ ansible-vault encrypt passwords.yml
+ansible-vault encrypt passwords.yml
 ```
 
 3. Execute the playbook
 
 Local deployment:
+
 ```sh
-$ ansible-playbook hosted_engine_deploy.yml --extra-vars='@he_deployment.json' --extra-vars='@passwords.yml' --ask-vault-pass
+ansible-playbook hosted_engine_deploy.yml --extra-vars='@he_deployment.json' --extra-vars='@passwords.yml' --ask-vault-pass
 ```
 
 Deployment over a remote host:
+
 ```sh
 ansible-playbook -i host123.localdomain, hosted_engine_deploy.yml --extra-vars='@he_deployment.json' --extra-vars='@passwords.yml' --ask-vault-pass
 ```
@@ -348,28 +352,30 @@ pipelining = True
 
 Make changes in the engine VM during the deployment
 ---
+
 In some cases, a user may want to make adjustments to the engine VM
 during the deployment process. There are 2 ways to do that:
 
-**Automatic:**
+__Automatic:__
 
 Write ansible playbooks that will run on the engine VM before or after the engine VM installation.
 
 You can add the playbooks to the following locations:
 
-- ```hooks/enginevm_before_engine_setup```: These will be ran before running engine-setup on the engine machine.
+* ```hooks/enginevm_before_engine_setup```: These will be ran before running engine-setup on the engine machine.
 
-- ```hooks/enginevm_after_engine_setup```: These will be ran after running engine-setup on the engine machine.
+* ```hooks/enginevm_after_engine_setup```: These will be ran after running engine-setup on the engine machine.
 
-- ```hooks/after_add_host```: These will be ran after adding the host to the engine, but before checking if it is up. You can place here playbooks to customize the host, such as configuring required networks, and then activate it, so that deployment will find it as "Up" and continue successfully. See examples/required_networks_fix.yml for an example.
+* ```hooks/after_add_host```: These will be ran after adding the host to the engine, but before checking if it is up. You can place here playbooks to customize the host, such as configuring required networks, and then activate it, so that deployment will find it as "Up" and continue successfully. See examples/required_networks_fix.yml for an example.
 
 These playbooks will be consumed automatically by the role when you execute it.
 
-**Manual:**
+__Manual:__
 
 To make manual adjustments set the following variables to `true`:
-- `he_pause_before_engine_setup` - This will pause the deployment **before** running engine-setup, and before restoring, when using `he_restore_from_file`.
-- `he_pause_host` - This will pause the deployment **after** the engine has been setup.
+
+* `he_pause_before_engine_setup` - This will pause the deployment __before__ running engine-setup, and before restoring, when using `he_restore_from_file`.
+* `he_pause_host` - This will pause the deployment __after__ the engine has been setup.
 
 Set these variables to `true` will create a lock-file at /tmp that ends with `_he_setup_lock` on the machine the role was executed on. The deployment will continue after deleting the lock-file, or after 24 hours ( if the lock-file hasn't been removed ).
 
@@ -377,7 +383,7 @@ In order to proceed with the deployment, before deleting the lock-file, make sur
 
 Both of the lock-file path and the engine's URL will be presented during the role execution.
 
-**On Failure**
+__On Failure__
 
 If "Add Host" failed and left the host in status "non_operational", by default the deployment will be paused, similarly to "Manual" above, so that the user can try to fix the host to get it to "up" state, before removing the lock file and continuing. If you want the process to fail instead of pausing, set `he_pause_after_failed_add_host` to false.
 
@@ -385,6 +391,7 @@ If `engine-backup --mode=restore` failed, by default the deployment will be paus
 
 Demo
 ----
+
 Here a demo showing a deployment on NFS configuring the engine VM with static IP.
 [![asciicast](https://asciinema.org/a/205639.png)](https://asciinema.org/a/205639)
 

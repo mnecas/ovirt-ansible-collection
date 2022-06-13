@@ -13,7 +13,6 @@ Role Variables
 | data_center             | Default               | Name of the data center from which hosts stale LUN should be removed. |
 | lun_wwid                | UNDEF                 | WWID of the stale LUN(s) which should be removed from the hosts. Separate multiple LUNs with spaces. |
 
-
 Example Playbook
 ----------------
 

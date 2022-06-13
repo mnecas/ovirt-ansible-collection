@@ -9,5 +9,5 @@
   wait_for:
     path: "{{ he_setup_lock_file.path }}"
     state: absent
-    timeout: 86400  # 24 hours
+    timeout: 86400 # 24 hours
   delegate_to: localhost

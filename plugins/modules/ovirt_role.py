@@ -5,6 +5,21 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+import traceback
+from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    convert_to_bytes,
+    create_connection,
+    equal,
+    get_dict_of_struct,
+    get_link_name,
+    get_id_by_name,
+    ovirt_full_argument_spec,
+    search_by_attributes,
+    search_by_name,
+)
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -82,21 +97,6 @@ ovirt_role:
     type: list
 '''
 
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    convert_to_bytes,
-    create_connection,
-    equal,
-    get_dict_of_struct,
-    get_link_name,
-    get_id_by_name,
-    ovirt_full_argument_spec,
-    search_by_attributes,
-    search_by_name,
-)
-from ansible.module_utils.basic import AnsibleModule
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
@@ -117,7 +117,8 @@ class RoleModule(BaseModule):
             permits=[
                 otypes.Permit(id=all_permits.get(new_permit)) for new_permit in self.param('permits')
             ] if self.param('permits') else None,
-            description=self.param('description') if self.param('administrative') else None,
+            description=self.param('description') if self.param(
+                'administrative') else None,
         )
 
     def get_all_permits(self):
@@ -128,7 +129,8 @@ class RoleModule(BaseModule):
             if self.param('permits'):
                 if 'login' not in self.param('permits'):
                     self.param('permits').append('login')
-                permits_service = self._service.service(entity.id).permits_service()
+                permits_service = self._service.service(
+                    entity.id).permits_service()
                 current = [er.name for er in permits_service.list()]
                 passed = self.param('permits')
                 if not sorted(current) == sorted(passed):
@@ -140,7 +142,8 @@ class RoleModule(BaseModule):
                     # add passed permits
                     all_permits = self.get_all_permits()
                     for new_permit in passed:
-                        permits_service.add(otypes.Permit(id=all_permits.get(new_permit)))
+                        permits_service.add(otypes.Permit(
+                            id=all_permits.get(new_permit)))
                     return False
             return True
 

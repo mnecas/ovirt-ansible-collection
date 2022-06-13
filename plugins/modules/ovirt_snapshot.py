@@ -20,6 +20,25 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    get_entity,
+    ovirt_full_argument_spec,
+    search_by_name,
+    wait,
+    get_id_by_name,
+    get_link_name
+)
+from ansible.module_utils.basic import AnsibleModule
+from datetime import datetime
+from ansible.module_utils.six.moves.urllib.parse import urlparse
+from ansible.module_utils.six.moves.http_client import HTTPSConnection, IncompleteRead
+import time
+import ssl
+import os
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -190,34 +209,10 @@ snapshots:
 '''
 
 
-import traceback
-
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
-
-import os
-import ssl
-import time
-
-from ansible.module_utils.six.moves.http_client import HTTPSConnection, IncompleteRead
-from ansible.module_utils.six.moves.urllib.parse import urlparse
-
-from datetime import datetime
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_dict_of_struct,
-    get_entity,
-    ovirt_full_argument_spec,
-    search_by_name,
-    wait,
-    get_id_by_name,
-    get_link_name
-)
 
 
 def transfer(connection, module, direction, transfer_func):
@@ -304,7 +299,8 @@ def upload_disk_image(connection, module):
                 chunk = disk.read(to_read)
                 if not chunk:
                     transfer_service.pause()
-                    raise RuntimeError("Unexpected end of file at pos=%d" % pos)
+                    raise RuntimeError(
+                        "Unexpected end of file at pos=%d" % pos)
                 proxy_connection.send(chunk)
                 pos += len(chunk)
 
@@ -363,7 +359,8 @@ def create_snapshot(module, vm_service, snapshots_service, connection):
     if snapshot is None:
         if not module.check_mode:
             disk_attachments_id = set(
-                get_disk_attachment(disk, vm_service.disk_attachments_service().list(), connection).id
+                get_disk_attachment(
+                    disk, vm_service.disk_attachments_service().list(), connection).id
                 for disk in module.params.get('disks')
             ) if module.params.get('disks') else None
 
@@ -371,7 +368,8 @@ def create_snapshot(module, vm_service, snapshots_service, connection):
                 otypes.Snapshot(
                     description=module.params.get('description'),
                     persist_memorystate=module.params.get('use_memory'),
-                    disk_attachments=[otypes.DiskAttachment(disk=otypes.Disk(id=da_id)) for da_id in disk_attachments_id] if disk_attachments_id else None
+                    disk_attachments=[otypes.DiskAttachment(disk=otypes.Disk(
+                        id=da_id)) for da_id in disk_attachments_id] if disk_attachments_id else None
                 )
             )
         changed = True
@@ -452,14 +450,16 @@ def restore_snapshot(module, vm_service, snapshots_service):
 
 
 def get_snapshot_disk_id(module, snapshots_service):
-    snapshot_service = snapshots_service.snapshot_service(module.params.get('snapshot_id'))
+    snapshot_service = snapshots_service.snapshot_service(
+        module.params.get('snapshot_id'))
     snapshot_disks_service = snapshot_service.disks_service()
 
     disk_id = ''
     if module.params.get('disk_id'):
         disk_id = module.params.get('disk_id')
     elif module.params.get('disk_name'):
-        disk_id = get_id_by_name(snapshot_disks_service, module.params.get('disk_name'))
+        disk_id = get_id_by_name(
+            snapshot_disks_service, module.params.get('disk_name'))
     return disk_id
 
 
@@ -471,7 +471,8 @@ def remove_old_snapshosts(module, vm_service, snapshots_service):
         if snapshot.vm is not None and snapshot.vm.name == module.params.get('vm_name'):
             diff = date_now - snapshot.date.replace(tzinfo=None)
             if diff.days >= module.params.get('keep_days_old'):
-                snapshot = remove_snapshot(module, vm_service, snapshots_service, snapshot.id).get('snapshot')
+                snapshot = remove_snapshot(
+                    module, vm_service, snapshots_service, snapshot.id).get('snapshot')
                 deleted_snapshots.append(snapshot)
                 changed = True
     return dict(snapshots=deleted_snapshots, changed=changed)
@@ -532,15 +533,18 @@ def main():
         state = module.params['state']
         if state == 'present':
             if module.params.get('disk_id') or module.params.get('disk_name'):
-                module.params['disk_id'] = get_snapshot_disk_id(module, snapshots_service)
+                module.params['disk_id'] = get_snapshot_disk_id(
+                    module, snapshots_service)
                 if module.params['upload_image_path']:
                     ret['changed'] = upload_disk_image(connection, module)
                 if module.params['download_image_path']:
                     ret['changed'] = download_disk_image(connection, module)
             if module.params.get('keep_days_old') is not None:
-                ret = remove_old_snapshosts(module, vm_service, snapshots_service)
+                ret = remove_old_snapshosts(
+                    module, vm_service, snapshots_service)
             else:
-                ret = create_snapshot(module, vm_service, snapshots_service, connection)
+                ret = create_snapshot(module, vm_service,
+                                      snapshots_service, connection)
         elif state == 'restore':
             ret = restore_snapshot(module, vm_service, snapshots_service)
         elif state == 'absent':

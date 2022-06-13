@@ -1,6 +1,5 @@
 ---
 - block:
-
     - name: Populate service facts
       service_facts:
 
@@ -44,7 +43,7 @@
     - name: Set a variable
       set_fact:
         startup: true
-      tags: ['never', 'startup']
+      tags: ["never", "startup"]
 
     - name: Define a query for HE hosts
       set_fact:

@@ -20,6 +20,15 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    ovirt_info_full_argument_spec,
+    get_id_by_name
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -86,17 +95,6 @@ ovirt_storage_vms:
     type: list
 '''
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_dict_of_struct,
-    ovirt_info_full_argument_spec,
-    get_id_by_name
-)
-
 
 def main():
     argument_spec = ovirt_info_full_argument_spec(
@@ -120,13 +118,16 @@ def main():
         auth = module.params.pop('auth')
         connection = create_connection(auth)
         storage_domains_service = connection.system_service().storage_domains_service()
-        sd_id = get_id_by_name(storage_domains_service, module.params['storage_domain'])
-        storage_domain_service = storage_domains_service.storage_domain_service(sd_id)
+        sd_id = get_id_by_name(storage_domains_service,
+                               module.params['storage_domain'])
+        storage_domain_service = storage_domains_service.storage_domain_service(
+            sd_id)
         vms_service = storage_domain_service.vms_service()
 
         # Find the unregistered VM we want to register:
         if module.params.get('unregistered'):
-            vms = vms_service.list(unregistered=True, follow=",".join(module.params['follow']))
+            vms = vms_service.list(
+                unregistered=True, follow=",".join(module.params['follow']))
         else:
             vms = vms_service.list(follow=",".join(module.params['follow']))
         result = dict(

@@ -20,6 +20,14 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    ovirt_info_full_argument_spec,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -75,16 +83,6 @@ ovirt_system_option:
     type: dict
 '''
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_dict_of_struct,
-    ovirt_info_full_argument_spec,
-)
-
 
 def main():
     argument_spec = ovirt_info_full_argument_spec(
@@ -107,13 +105,15 @@ def main():
         auth = module.params.pop('auth')
         connection = create_connection(auth)
         options_service = connection.system_service().options_service()
-        option_service = options_service.option_service(module.params.get('name'))
+        option_service = options_service.option_service(
+            module.params.get('name'))
 
         try:
             option = option_service.get(version=module.params.get('version'))
         except Exception as e:
             if str(e) == "HTTP response code is 404.":
-                raise ValueError("Could not find the option with name '{0}'".format(module.params.get('name')))
+                raise ValueError("Could not find the option with name '{0}'".format(
+                    module.params.get('name')))
             raise Exception("Unexpected error: '{0}'".format(e))
 
         result = dict(

@@ -6,14 +6,14 @@ The `image_template` role creates a template from external image. Currently the 
 Requirements
 ------------
 
- * oVirt has to be 4.1 or higher and [ovirt-imageio] must be installed and running.
- * CA certificate of oVirt engine. The path to CA certificate must be specified in the `ovirt_ca` variable.
- * file
+* oVirt has to be 4.1 or higher and [ovirt-imageio] must be installed and running.
+* CA certificate of oVirt engine. The path to CA certificate must be specified in the `ovirt_ca` variable.
+* file
 
 Limitations
 -----------
 
- * We don not support Ansible Check Mode (Dry Run), because this role is using few modules(command module),
+* We don not support Ansible Check Mode (Dry Run), because this role is using few modules(command module),
    which do not support it. Once all modules used by this role will support it, we will support it.
 
 Role Variables

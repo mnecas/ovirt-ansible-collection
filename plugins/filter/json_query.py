@@ -38,16 +38,21 @@ def json_query(data, expr):
 
     # Hack to handle Ansible Unsafe text, AnsibleMapping and AnsibleSequence
     # See issue: https://github.com/ansible-collections/community.general/issues/320
-    jmespath.functions.REVERSE_TYPES_MAP['string'] = jmespath.functions.REVERSE_TYPES_MAP['string'] + ('AnsibleUnicode', 'AnsibleUnsafeText', )
-    jmespath.functions.REVERSE_TYPES_MAP['array'] = jmespath.functions.REVERSE_TYPES_MAP['array'] + ('AnsibleSequence', )
-    jmespath.functions.REVERSE_TYPES_MAP['object'] = jmespath.functions.REVERSE_TYPES_MAP['object'] + ('AnsibleMapping', )
+    jmespath.functions.REVERSE_TYPES_MAP['string'] = jmespath.functions.REVERSE_TYPES_MAP['string'] + (
+        'AnsibleUnicode', 'AnsibleUnsafeText', )
+    jmespath.functions.REVERSE_TYPES_MAP['array'] = jmespath.functions.REVERSE_TYPES_MAP['array'] + (
+        'AnsibleSequence', )
+    jmespath.functions.REVERSE_TYPES_MAP['object'] = jmespath.functions.REVERSE_TYPES_MAP['object'] + (
+        'AnsibleMapping', )
     try:
         return jmespath.search(expr, data)
     except jmespath.exceptions.JMESPathError as e:
-        raise AnsibleFilterError('JMESPathError in json_query filter plugin:\n%s' % e)
+        raise AnsibleFilterError(
+            'JMESPathError in json_query filter plugin:\n%s' % e)
     except Exception as e:
         # For older jmespath, we can get ValueError and TypeError without much info.
-        raise AnsibleFilterError('Error in jmespath.search in json_query filter plugin:\n%s' % e)
+        raise AnsibleFilterError(
+            'Error in jmespath.search in json_query filter plugin:\n%s' % e)
 
 
 class FilterModule(object):

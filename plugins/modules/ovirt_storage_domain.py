@@ -20,6 +20,21 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    get_entity,
+    get_id_by_name,
+    OvirtRetry,
+    ovirt_full_argument_spec,
+    search_by_name,
+    search_by_attributes,
+    wait,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -417,23 +432,6 @@ try:
 except ImportError:
     pass
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.@NAMESPACE@.@NAME@.plugins.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    get_entity,
-    get_id_by_name,
-    OvirtRetry,
-    ovirt_full_argument_spec,
-    search_by_name,
-    search_by_attributes,
-    wait,
-)
-
 
 class StorageDomainModule(BaseModule):
 
@@ -479,12 +477,14 @@ class StorageDomainModule(BaseModule):
 
     def __target_lun_map(self, storage):
         if storage.get('target'):
-            lun_ids = storage.get('lun_id') if isinstance(storage.get('lun_id'), list) else [(storage.get('lun_id'))]
+            lun_ids = storage.get('lun_id') if isinstance(
+                storage.get('lun_id'), list) else [(storage.get('lun_id'))]
             return [(lun_id, storage.get('target')) for lun_id in lun_ids]
         elif storage.get('target_lun_map'):
             return [(target_map.get('lun_id'), target_map.get('target')) for target_map in storage.get('target_lun_map')]
         else:
-            lun_ids = storage.get('lun_id') if isinstance(storage.get('lun_id'), list) else [(storage.get('lun_id'))]
+            lun_ids = storage.get('lun_id') if isinstance(
+                storage.get('lun_id'), list) else [(storage.get('lun_id'))]
             return [(lun_id, None) for lun_id in lun_ids]
 
     def build_entity(self):
@@ -498,11 +498,13 @@ class StorageDomainModule(BaseModule):
             comment=self.param('comment'),
             wipe_after_delete=self.param('wipe_after_delete'),
             backup=self.param('backup'),
-            critical_space_action_blocker=self.param('critical_space_action_blocker'),
+            critical_space_action_blocker=self.param(
+                'critical_space_action_blocker'),
             warning_low_space_indicator=self.param('warning_low_space'),
             import_=True if self.param('state') == 'imported' else None,
             id=self.param('id') if self.param('state') == 'imported' else None,
-            type=otypes.StorageDomainType(storage_type if storage_type == 'managed_block_storage' else self.param('domain_function')),
+            type=otypes.StorageDomainType(
+                storage_type if storage_type == 'managed_block_storage' else self.param('domain_function')),
             host=otypes.Host(name=self.param('host')),
             discard_after_delete=self.param('discard_after_delete'),
             storage=otypes.HostStorage(
@@ -598,7 +600,8 @@ class StorageDomainModule(BaseModule):
             # Find the DC, where the storage resides:
             dc_name = self._find_attached_datacenter_name(storage_domain.name)
         attached_sds_service = self._attached_sds_service(dc_name)
-        attached_sd_service = attached_sds_service.storage_domain_service(storage_domain.id)
+        attached_sd_service = attached_sds_service.storage_domain_service(
+            storage_domain.id)
         return attached_sd_service
 
     def _maintenance(self, storage_domain):
@@ -687,7 +690,8 @@ class StorageDomainModule(BaseModule):
             equal(self.param('critical_space_action_blocker'), entity.critical_space_action_blocker) and
             equal(self.param('discard_after_delete'), entity.discard_after_delete) and
             equal(self.param('wipe_after_delete'), entity.wipe_after_delete) and
-            equal(self.param('warning_low_space'), entity.warning_low_space_indicator)
+            equal(self.param('warning_low_space'),
+                  entity.warning_low_space_indicator)
         )
 
 
@@ -716,7 +720,8 @@ def control_state(sd_module):
         )
 
     if failed_state(sd):
-        raise Exception("Not possible to manage storage domain '%s'." % sd.name)
+        raise Exception(
+            "Not possible to manage storage domain '%s'." % sd.name)
     elif sd.status == sdstate.ACTIVATING:
         wait(
             service=sd_service,
@@ -740,7 +745,8 @@ def control_state(sd_module):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent', 'maintenance', 'unattached', 'imported', 'update_ovf_store'],
+            choices=['present', 'absent', 'maintenance',
+                     'unattached', 'imported', 'update_ovf_store'],
             default='present',
         ),
         id=dict(default=None),
@@ -748,7 +754,8 @@ def main():
         description=dict(default=None),
         comment=dict(default=None),
         data_center=dict(default=None),
-        domain_function=dict(choices=['data', 'iso', 'export'], default='data', aliases=['type']),
+        domain_function=dict(
+            choices=['data', 'iso', 'export'], default='data', aliases=['type']),
         host=dict(default=None),
         localfs=dict(default=None, type='dict'),
         nfs=dict(default=None, type='dict'),
@@ -791,7 +798,8 @@ def main():
             # Pick random available host when host parameter is missing
             host_param = module.params['host']
             if not host_param:
-                host = search_by_attributes(connection.system_service().hosts_service(), status='up')
+                host = search_by_attributes(
+                    connection.system_service().hosts_service(), status='up')
                 if host is None:
                     raise Exception(
                         "Not possible to remove storage domain '%s' "

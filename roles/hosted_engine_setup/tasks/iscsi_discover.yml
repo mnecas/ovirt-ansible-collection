@@ -22,4 +22,3 @@
 # TODO: perform an iSCSI logout when viable, see:
 # https://bugzilla.redhat.com/show_bug.cgi?id=1535951
 # https://github.com/ansible/ansible/issues/35039
-...
